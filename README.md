@@ -7,7 +7,7 @@ _Berkeley AI Research_
 [Project Page](https://general-navigation-models.github.io) | [Dataset](https://drive.google.com/file/d/1ZwSKwhamq8XmF4mcFNisp9H7YX5kQZ6e/view?usp=sharing) | [Pre-Trained Models](https://drive.google.com/drive/folders/19yJcSJvGmpGlo0X-0owQKrrkPFmPKVt8?usp=sharing)
 
 ## Overview
-This repository contains code for training our language-conditioned navigation policy with our data, pre-trained model checkpoints, as well as example code to deploy it on a real robot. We made our code by editing the origional code base for training the general navigation models, GNM, ViNT, and NoMaD [repository](https://github.com/robodhruv/visualnav-transformer).
+This repository contains code for training our language-conditioned navigation policy with our data, pre-trained model checkpoints, as well as example code to deploy it on a real robot. We made our code by editing the origional code base for training the general navigation models, GNM, ViNT, and NoMaD [repository](https://github.com/robodhruv/visualnav-transformer). [TODO] indicates the sentences, which we need to edit before releasing. In other words, these sentences are same as the original code base.
 
 - `./train/train.py`: training script to train or fine-tune the LeLaN on your custom data.
 - `./train/vint_train/models/`: contains model files for LeLaN and some visual navigation baselines.
@@ -17,6 +17,23 @@ This repository contains code for training our language-conditioned navigation p
 - `./deployment/src/navigate.sh`: [TODO]script that deploys a trained GNM/ViNT/NoMaD model on the robot to navigate to a desired goal in the generated topological graph. Please see relevant sections below for configuration settings.
 - `./deployment/src/explore.sh`: [TODO]script that deploys a trained NoMaD model on the robot to randomly explore its environment. Please see relevant sections below for configuration settings.
 
+
+### Data
+We train our model with the following datasets. We annotate the publicly available robot navigation dataset as well as the in-the-wild videos such as YouTube. In addition, we collect the videos by holding the shperical camera and walking around and annotate them by our method. We publish all annotated labels and corresponding images [here](https://drive.google.com/file/d/1ZwSKwhamq8XmF4mcFNisp9H7YX5kQZ6e/view?usp=sharing). Note that we provide the python code to download and save the images from the YouTube instead of providing the images, due to the copyright.
+- Robot navigation dataset (GO Stanford2, GO Stanford4, and SACSoN)
+- Human-walking dataset
+- YouTube tour dataset
+
+Followings are the steps to use our dataset on our training code.
+1. Set up the conda environment:
+    ```
+    conda env create -f train/train_environment.yml
+    ```
+2. Source the conda environment:
+    ```
+    conda activate vint_train
+    
+    
 ## Train
 
 This subfolder contains code for processing datasets and training models from your own data.
