@@ -67,10 +67,10 @@ feature_size: 4096
 datasets:  
   go_stanford4:
     #data_folder: /home/noriaki/visualnav-transformer_combine/gnm_dataset/go_stanford/ # datasets/stanford_go_new
-    train: /media/noriaki/Noriaki_Data3/data_memory/lelan_gs4/train/
-    test: /media/noriaki/Noriaki_Data3/data_memory/lelan_gs4/test/
-    image: /media/noriaki/Noriaki_Data3/dataset_LeLaN_gs4/image/
-    pickle: /media/noriaki/Noriaki_Data3/dataset_LeLaN_gs4/pickle/
+    train: ../dataset/lelan_gs4/train/
+    test: ../dataset/lelan_gs4/test/
+    image: ../dataset/dataset_LeLaN_gs4/image/
+    pickle: ../dataset/dataset_LeLaN_gs4/pickle/
     #odom: /media/noriaki/Noriaki_Data/data_GS/dataset_odom.txt
     #end_slack: 0
     #goals_per_obs: 2 # increase dataset size
@@ -84,10 +84,10 @@ datasets:
             
   sacson:
     #data_folder: /home/noriaki/visualnav-transformer_combine/gnm_dataset/sacson/ # datasets/stanford_go_new
-    train: /media/noriaki/Noriaki_Data3/data_memory/lelan_sacson/train/
-    test: /media/noriaki/Noriaki_Data3/data_memory/lelan_sacson/test/
-    image: /media/noriaki/Noriaki_Data3/dataset_LeLaN_sacson/
-    pickle: /media/noriaki/Noriaki_Data3/dataset_LeLaN_sacson/
+    train: ../dataset/lelan_sacson/train/
+    test: ../dataset/lelan_sacson/test/
+    image: ../dataset/dataset_LeLaN_sacson/
+    pickle: ../dataset/dataset_LeLaN_sacson/
     #odom: /media/noriaki/Noriaki_Data/data_GS/dataset_odom.txt
     #end_slack: 0
     #goals_per_obs: 2 # increase dataset size
@@ -101,10 +101,10 @@ datasets:
             
   go_stanford2:
     #data_folder: /home/noriaki/visualnav-transformer_combine/gnm_dataset/sacson/ # datasets/stanford_go_new
-    train: /media/noriaki/Noriaki_Data3/data_memory/lelan_gs2/train/
-    test: /media/noriaki/Noriaki_Data3/data_memory/lelan_gs2/test/
-    image: /media/noriaki/Noriaki_Data3/dataset_LeLaN_gs2/
-    pickle: /media/noriaki/Noriaki_Data3/dataset_LeLaN_gs2/
+    train: ../dataset/lelan_gs2/train/
+    test: ../dataset/lelan_gs2/test/
+    image: ../dataset/dataset_LeLaN_gs2/
+    pickle: ../dataset/dataset_LeLaN_gs2/
     #odom: /media/noriaki/Noriaki_Data/data_GS/dataset_odom.txt
     #end_slack: 0
     #goals_per_obs: 2 # increase dataset size
@@ -117,11 +117,11 @@ datasets:
     #width: 1160
 
   humanw:
-    #data_folder: /home/noriaki/visualnav-transformer_combine/gnm_dataset/sacson/ # datasets/stanford_go_new
-    train: /media/noriaki/Noriaki_Data3/data_memory/lelan_humanw/train/
-    test: /media/noriaki/Noriaki_Data3/data_memory/lelan_humanw/test/
-    image: /media/noriaki/Noriaki_Data3/dataset_LeLaN_humanwalk/
-    pickle: /media/noriaki/Noriaki_Data3/dataset_LeLaN_humanwalk/ #instruct
+    #data_folder: /home/noriaki/visualnav-transformer_combine/gnm_dataset/sacson/ # datasets/stanford_go_new   
+    train: ../dataset/lelan_humanw/train/
+    test: ../dataset/lelan_humanw/test/
+    image: ../dataset/dataset_LeLaN_humanwalk/
+    pickle: ../dataset/dataset_LeLaN_humanwalk/    
     #odom: /media/noriaki/Noriaki_Data/data_GS/dataset_odom.txt
     #end_slack: 0
     #goals_per_obs: 2 # increase dataset size
@@ -135,10 +135,10 @@ datasets:
 
   youtube:
     #data_folder: /home/noriaki/visualnav-transformer_combine/gnm_dataset/sacson/ # datasets/stanford_go_new
-    train: /media/noriaki/Noriaki_Data3/data_memory/lelan_youtube/train/
-    test: /media/noriaki/Noriaki_Data3/data_memory/lelan_youtube/test/
-    image: /media/noriaki/Noriaki_Data3/dataset_LeLaN_youtube/
-    pickle: /media/noriaki/Noriaki_Data3/dataset_LeLaN_youtube/ #instruct
+    train: ../dataset/lelan_youtube/train/
+    test: ../dataset/lelan_youtube/test/
+    image: ../dataset/dataset_LeLaN_youtube/
+    pickle: ../dataset/dataset_LeLaN_youtube/        
     #odom: /media/noriaki/Noriaki_Data/data_GS/dataset_odom.txt
     #end_slack: 0
     #goals_per_obs: 2 # increase dataset size

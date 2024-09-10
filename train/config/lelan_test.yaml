@@ -67,10 +67,10 @@ feature_size: 4096
 datasets:  
   go_stanford4:
     #data_folder: /home/noriaki/visualnav-transformer_combine/gnm_dataset/go_stanford/ # datasets/stanford_go_new
-    train: /media/noriaki/Noriaki_Data3/data_memory/lelan_gs4/train/
-    test: /media/noriaki/Noriaki_Data3/data_memory/lelan_gs4/test/
-    image: /media/noriaki/Noriaki_Data3/dataset_LeLaN_gs4/image/
-    pickle: /media/noriaki/Noriaki_Data3/dataset_LeLaN_gs4/pickle/
+    train: ../dataset/lelan_gs4/train/
+    test: ../dataset/lelan_gs4/test/
+    image: ../dataset/dataset_LeLaN_gs4/image/
+    pickle: ../dataset/dataset_LeLaN_gs4/pickle/
     #odom: /media/noriaki/Noriaki_Data/data_GS/dataset_odom.txt
     #end_slack: 0
     #goals_per_obs: 2 # increase dataset size
