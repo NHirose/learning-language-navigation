@@ -20,6 +20,8 @@ This repository contains code for training our language-conditioned navigation p
 
 ### Data
 We train our model with the following datasets. We annotate the publicly available robot navigation dataset as well as the in-the-wild videos such as YouTube. In addition, we collect the videos by holding the shperical camera and walking around and annotate them by our method. We publish all annotated labels and corresponding images [here](https://drive.google.com/file/d/1ZwSKwhamq8XmF4mcFNisp9H7YX5kQZ6e/view?usp=sharing). Note that we provide the python code to download and save the images from the YouTube instead of providing the images, due to the copyright.
+[TODO] I need to remove a few trajectories, which is not good for releasing, in Human-walking dataset.
+
 - Robot navigation dataset (GO Stanford2, GO Stanford4, and SACSoN)
 - Human-walking dataset
 - YouTube tour dataset
@@ -49,6 +51,7 @@ This subfolder contains code for processing datasets and training models from yo
 The codebase assumes access to a workstation running Ubuntu (tested on 18.04 and 20.04), Python 3.7+, and a GPU with CUDA 10+. It also assumes access to conda, but you can modify it to work with other virtual environment packages, or a native setup.
 ### Setup
 Run the commands below inside the `vint_release/` (topmost) directory:
+[TODO] we need to do something for ResNet-film. Now we download their repository and copy and paste the exact model file in our code.
 1. Set up the conda environment:
     ```
     [TODO]conda env create -f train/train_environment.yml
@@ -198,7 +201,7 @@ This command opens up 4 windows:
 
 When the robot is finishing navigating, kill the `pd_controller.py` script, and then kill the tmux session. If you want to take control of the robot while it is navigating, the `joy_teleop.py` script allows you to do so with the joystick.
 
-### Adapting this code to different robots
+### [TODO]Adapting this code to different robots
 
 We hope that this codebase is general enough to allow you to deploy it to your favorite ROS-based robots. You can change the robot configuration parameters in `vint_release/deployment/config/robot.yaml`, like the max angular and linear velocities of the robot and the topics to publish to teleop and control the robot. Please feel free to create a Github Issue or reach out to the authors at shah@cs.berkeley.edu.
 
