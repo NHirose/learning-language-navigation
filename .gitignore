@@ -3,3 +3,4 @@ train/logs
 __pycache__/
 *.pyc
 dataset
+download_youtube/videos
