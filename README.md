@@ -1,28 +1,21 @@
-# General Navigation Models: GNM, ViNT and NoMaD
+# LeLaN: Learning A Language-conditioned Navigation Policy from In-the-Wild Video
 
-**Contributors**: Dhruv Shah, Ajay Sridhar, Nitish Dashora, Catherine Glossop, Kyle Stachowicz, Arjun Bhorkar, Kevin Black, Noriaki Hirose, Sergey Levine
+**Contributors**: Noriaki Hirose, Catherine Glossop, Ajay Sridhar, Oier Mees, Sergey Levine
 
 _Berkeley AI Research_
 
-[Project Page](https://general-navigation-models.github.io) | [Citing](https://github.com/robodhruv/visualnav-transformer#citing) | [Pre-Trained Models](https://drive.google.com/drive/folders/1a9yWR2iooXFAqjQHetz263--4_2FFggg?usp=sharing)
-
----
-
-General Navigation Models are general-purpose goal-conditioned visual navigation policies trained on diverse, cross-embodiment training data, and can control many different robots in zero-shot. They can also be efficiently fine-tuned, or adapted, to new robots and downstream tasks. Our family of models is described in the following research papers (and growing):
-1. [GNM: A General Navigation Model to Drive Any Robot](https://sites.google.com/view/drive-any-robot) (_October 2022_, presented at ICRA 2023)
-2. [ViNT: A Foundation Model for Visual Navigation](https://general-navigation-models.github.io/vint/index.html) (_June 2023_, presented at CoRL 2023)
-3. [NoMaD: Goal Masking Diffusion Policies for Navigation and Exploration](https://general-navigation-models.github.io/nomad/index.html) (_October 2023_)
+[Project Page](https://general-navigation-models.github.io) | [Dataset](https://drive.google.com/file/d/1ZwSKwhamq8XmF4mcFNisp9H7YX5kQZ6e/view?usp=sharing) | [Pre-Trained Models](https://drive.google.com/drive/folders/19yJcSJvGmpGlo0X-0owQKrrkPFmPKVt8?usp=sharing)
 
 ## Overview
-This repository contains code for training our family of models with your own data, pre-trained model checkpoints, as well as example code to deploy it on a TurtleBot2/LoCoBot robot. The repository follows the organization from [GNM](https://github.com/PrieureDeSion/drive-any-robot).
+This repository contains code for training our language-conditioned navigation policy with our data, pre-trained model checkpoints, as well as example code to deploy it on a real robot. We made our code by editing the origional code base for training the general navigation models, GNM, ViNT, and NoMaD [repository](https://github.com/robodhruv/visualnav-transformer).
 
-- `./train/train.py`: training script to train or fine-tune the ViNT model on your custom data.
-- `./train/vint_train/models/`: contains model files for GNM, ViNT, and some baselines.
-- `./train/process_*.py`: scripts to process rosbags or other formats of robot trajectories into training data.
-- `./deployment/src/record_bag.sh`: script to collect a demo trajectory as a ROS bag in the target environment on the robot. This trajectory is subsampled to generate a topological graph of the environment.
-- `./deployment/src/create_topomap.sh`: script to convert a ROS bag of a demo trajectory into a topological graph that the robot can use to navigate.
-- `./deployment/src/navigate.sh`: script that deploys a trained GNM/ViNT/NoMaD model on the robot to navigate to a desired goal in the generated topological graph. Please see relevant sections below for configuration settings.
-- `./deployment/src/explore.sh`: script that deploys a trained NoMaD model on the robot to randomly explore its environment. Please see relevant sections below for configuration settings.
+- `./train/train.py`: training script to train or fine-tune the LeLaN on your custom data.
+- `./train/vint_train/models/`: contains model files for LeLaN and some visual navigation baselines.
+- `./train/process_*.py`: [TODO]scripts to process rosbags or other formats of robot trajectories into training data.
+- `./deployment/src/record_bag.sh`: [TODO]script to collect a demo trajectory as a ROS bag in the target environment on the robot. This trajectory is subsampled to generate a topological graph of the environment.
+- `./deployment/src/create_topomap.sh`: [TODO]script to convert a ROS bag of a demo trajectory into a topological graph that the robot can use to navigate.
+- `./deployment/src/navigate.sh`: [TODO]script that deploys a trained GNM/ViNT/NoMaD model on the robot to navigate to a desired goal in the generated topological graph. Please see relevant sections below for configuration settings.
+- `./deployment/src/explore.sh`: [TODO]script that deploys a trained NoMaD model on the robot to randomly explore its environment. Please see relevant sections below for configuration settings.
 
 ## Train
 
