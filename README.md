@@ -100,17 +100,11 @@ This subfolder contains code to load a pre-trained LeLaN and deploy it on your r
 
 ### Hardware Setup
 We need following three hardwares to navigate the robot toward the target object location with the LeLaN.
-1. Robot
+1. Robot: Please setup the ROS on your robot to enable us to control the robot by "/cmd_vel" of geometry_msgs/Twist message.
 
-Please setup the ROS on your robot to enable us to control the robot by "/cmd_vel" of geometry_msgs/Twist message.
+2. Camera: Please mount the camera on your robot and launch the [node](http://wiki.ros.org/usb_cam) to publush "/usb_cam/image_raw" of sensor_msgs/Image message. We recommned to use a wide-angle RGB camera such as [ELP fisheye camera](https://www.amazon.com/ELP-170degree-Fisheye-640x480-Resolution/dp/B00VTHD17W) or [spherical camera](https://us.ricoh-imaging.com/product/theta-s/).
 
-2. Camera
-
-Please mount the camera on your robot and launch the [node](http://wiki.ros.org/usb_cam) to publush "/usb_cam/image_raw" of sensor_msgs/Image message. We recommned to use a wide-angle RGB camera such as [ELP fisheye camera](https://www.amazon.com/ELP-170degree-Fisheye-640x480-Resolution/dp/B00VTHD17W) or [spherical camera](https://us.ricoh-imaging.com/product/theta-s/).
-
-3. Joystick
-
-[Joystick](https://www.amazon.com/Logitech-Wireless-Nano-Receiver-Controller-Vibration/dp/B0041RR0TW)/[keyboard teleop](http://wiki.ros.org/teleop_twist_keyboard) that works with Linux. Add the index mapping for the _deadman_switch_ on the joystick to the `vint_release/deployment/config/joystick.yaml`. You can find the mapping from buttons to indices for common joysticks in the [wiki](https://wiki.ros.org/joy). 
+3. Joystick: [Joystick](https://www.amazon.com/Logitech-Wireless-Nano-Receiver-Controller-Vibration/dp/B0041RR0TW)/[keyboard teleop](http://wiki.ros.org/teleop_twist_keyboard) that works with Linux. Add the index mapping for the _deadman_switch_ on the joystick to the `vint_release/deployment/config/joystick.yaml`. You can find the mapping from buttons to indices for common joysticks in the [wiki](https://wiki.ros.org/joy). 
 
 
 ### Software Setup
