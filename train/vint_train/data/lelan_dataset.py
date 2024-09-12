@@ -908,24 +908,10 @@ class LeLaN_Dataset(Dataset):
             else:
                 iv = random.randint(0, len(self.image_path)-1)
                 #print("updating (no pickle)", iv)
-        
-        #print("before", image_fullsize.max(), image_fullsize.min(), image_fullsize.median(), image_fullsize.size())
-        
+            
         voffset = int(224.0*self.v_random*random.random())
         hoffset = int(224.0*self.h_random*random.random())
         
-        """
-        if self.only_front:
-            #print("image_fullsize", image_fullsize.shape)
-            image_obs = self._resize_norm(image_fullsize[:, voffset:224-voffset, hoffset:224-hoffset], self.image_size)
-            #print("image_obs", image_obs.size())
-        else:
-            if flag_back == 0:
-                image_obs = self._resize_norm(image_fullsize[:, voffset:224-voffset, hoffset:224-hoffset], self.image_size)
-            else:
-                image_obs = self._resize_norm(image_fullsize[:, voffset:224-voffset, 224+hoffset:2*224-hoffset], self.image_size)
-                #image_obs = self._resize_norm(image_fullsize[:,:,224:2*224], self.image_size)  
-        """ 
         image_obs_list = [] 
         if self.only_front:
             for ih in range(self.context_size + 1):
