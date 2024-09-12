@@ -11,12 +11,9 @@ This repository contains code for training our language-conditioned navigation p
 
 - `./train/train.py`: training script to train or fine-tune the LeLaN on your custom data.
 - `./train/vint_train/models/`: contains model files for LeLaN and some visual navigation baselines.
-- `./train/process_*.py`: [TODO]scripts to process rosbags or other formats of robot trajectories into training data.
-- `./deployment/src/record_bag.sh`: [TODO]script to collect a demo trajectory as a ROS bag in the target environment on the robot. This trajectory is subsampled to generate a topological graph of the environment.
-- `./deployment/src/create_topomap.sh`: [TODO]script to convert a ROS bag of a demo trajectory into a topological graph that the robot can use to navigate.
-- `./deployment/src/navigate.sh`: [TODO]script that deploys a trained GNM/ViNT/NoMaD model on the robot to navigate to a desired goal in the generated topological graph. Please see relevant sections below for configuration settings.
-- `./deployment/src/explore.sh`: [TODO]script that deploys a trained NoMaD model on the robot to randomly explore its environment. Please see relevant sections below for configuration settings.
-
+- `./deployment/src/record_bag.sh`: script to collect a demo trajectory as a ROS bag in the target environment on the robot. This trajectory is subsampled to generate a topological graph of the environment.
+- `./deployment/src/create_topomap.sh`: script to convert a ROS bag of a demo trajectory into a topological graph that the robot can use to navigate.
+- `./deployment/src/navigate.sh`: script that deploys a trained GNM/ViNT/NoMaD/LeLaN model on the robot to navigate to a desired goal in the generated topological graph. Please see relevant sections below for configuration settings.
 
 ### Data
 We train our model with the following datasets. We annotate the publicly available robot navigation dataset as well as the in-the-wild videos such as YouTube. In addition, we collect the videos by holding the shperical camera and walking around and annotate them by our method. We publish all annotated labels and corresponding images [here](https://drive.google.com/file/d/1ZwSKwhamq8XmF4mcFNisp9H7YX5kQZ6e/view?usp=sharing). Note that we provide the python code to download and save the images from the YouTube instead of providing the images, due to the copyright.
