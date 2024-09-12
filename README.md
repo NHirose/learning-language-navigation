@@ -114,12 +114,16 @@ Save the model weights *.pth file in `./deployment/model_weights` folder. Our mo
 
 #### Last-mile Navigation
 
+If the target object location is close to the robot and visible from the robot, you can simply run the LeLaN to move toward the target object. 
 
 #### Long-distance Navigation
 
+If it is difficult for the LeLaN to navigate toward your target object, you can leverage the topological map to move toward the target object, which is far and/or not visible from the robot.
+Our approach is just steps, 1) move toward the target node, which is close to the target object, and 2) go to the target object location by LeLaN. In our implementation, we use the ViNT policy for 1). To search the target node in the topological memory, we use Owl-ViT2 for scoring all nodes and select the node with the highest score.
+
 ##### [TODO]Collecting a Topological Map
 
-_Make sure to run these scripts inside the `vint_release/deployment/src/` directory._
+_Make sure to run these scripts inside the `./deployment/src/` directory._
 
 
 This section discusses a simple way to create a topological map of the target environment for deployment. For simplicity, we will use the robot in “path-following” mode, i.e. given a single trajectory in an environment, the task is to follow the same trajectory to the goal. The environment may have new/dynamic obstacles, lighting variations etc.
