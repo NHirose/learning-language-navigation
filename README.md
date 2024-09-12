@@ -95,65 +95,39 @@ Add `load_run: <project_name>/<log_run_name>`to your .yaml config file in `learn
 If you want to use our checkpoints, you can download the `*.pth` files from [this link](https://drive.google.com/drive/folders/19yJcSJvGmpGlo0X-0owQKrrkPFmPKVt8?usp=sharing).
 
 
-## [TODO]Deployment
-This subfolder contains code to load a pre-trained ViNT and deploy it on the open-source [LoCoBot indoor robot platform](http://www.locobot.org/) with a [NVIDIA Jetson Orin Nano](https://www.amazon.com/NVIDIA-Jetson-Orin-Nano-Developer/dp/B0BZJTQ5YP/ref=asc_df_B0BZJTQ5YP/?tag=hyprod-20&linkCode=df0&hvadid=652427572954&hvpos=&hvnetw=g&hvrand=12520404772764575478&hvpone=&hvptwo=&hvqmt=&hvdev=c&hvdvcmdl=&hvlocint=&hvlocphy=1013585&hvtargid=pla-2112361227514&psc=1&gclid=CjwKCAjw4P6oBhBsEiwAKYVkq7dqJEwEPz0K-H33oN7MzjO0hnGcAJDkx2RdT43XZHdSWLWHKDrODhoCmnoQAvD_BwE). It can be easily adapted to be run on alternate robots, and researchers have been able to independently deploy it on the following robots – Clearpath Jackal, DJI Tello, Unitree A1, TurtleBot2, Vizbot – and in simulated environments like CARLA.
+## Deployment
+This subfolder contains code to load a pre-trained LeLaN and deploy it on your robot platform with a [NVIDIA Jetson Orin](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-orin/)(We test our policy on Nvidia Jetson Orin AGX). 
 
-### [TODO]LoCoBot Setup
+### Hardware Setup
+We need following three hardwares to navigate the robot toward the target object location with the LeLaN.
+1. Robot
+Please setup the ROS on your robot to enable us to control the robot by "/cmd_vel" of geometry_msgs/Twist message.
 
-This software was tested on a LoCoBot running Ubuntu 20.04.
+2. Camera
+Please mount the camera on your robot and launch the [node](http://wiki.ros.org/usb_cam) to publush "/usb_cam/image_raw" of sensor_msgs/Image message. We recommned to use a wide-angle RGB camera such as [ELP fisheye camera](https://www.amazon.com/ELP-170degree-Fisheye-640x480-Resolution/dp/B00VTHD17W) or [spherical camera](https://us.ricoh-imaging.com/product/theta-s/).
 
-
-#### [TODO]Software Installation (in this order)
-1. ROS: [ros-noetic](https://wiki.ros.org/noetic/Installation/Ubuntu)
-2. ROS packages: 
-    ```bash
-    sudo apt-get install ros-noetic-usb-cam ros-noetic-joy
-    ```
-3. [kobuki](http://wiki.ros.org/kobuki/Tutorials/Installation)
-4. Conda 
-    - Install anaconda/miniconda/etc. for managing environments
-    - Make conda env with environment.yml (run this inside the `vint_release/` directory)
-        ```bash
-        conda env create -f deployment/deployment_environment.yaml
-        ```
-    - Source env 
-        ```bash
-        conda activate vint_deployment
-        ```
-    - (Recommended) add to `~/.bashrc`: 
-        ```bash
-        echo “conda activate vint_deployment” >> ~/.bashrc 
-        ```
-5. Install the `vint_train` packages (run this inside the `vint_release/` directory):
-    ```bash
-    pip install -e train/
-    ```
-6. Install the `diffusion_policy` package from this [repo](https://github.com/real-stanford/diffusion_policy):
-    ```bash
-    git clone git@github.com:real-stanford/diffusion_policy.git
-    pip install -e diffusion_policy/
-    ```
-7. (Recommended) Install [tmux](https://github.com/tmux/tmux/wiki/Installing) if not present.
-    Many of the bash scripts rely on tmux to launch multiple screens with different commands. This will be useful for debugging because you can see the output of each screen.
-
-#### [TODO]Hardware Requirements
-- LoCoBot: http://locobot.org (just the navigation stack)
-- A wide-angle RGB camera: [Example](https://www.amazon.com/ELP-170degree-Fisheye-640x480-Resolution/dp/B00VTHD17W). The `vint_locobot.launch` file uses camera parameters that work with cameras like the ELP fisheye wide angle, feel free to modify to your own. Adjust the camera parameters in `vint_release/deployment/config/camera.yaml` your camera accordingly (used for visualization).
-- [Joystick](https://www.amazon.com/Logitech-Wireless-Nano-Receiver-Controller-Vibration/dp/B0041RR0TW)/[keyboard teleop](http://wiki.ros.org/teleop_twist_keyboard) that works with Linux. Add the index mapping for the _deadman_switch_ on the joystick to the `vint_release/deployment/config/joystick.yaml`. You can find the mapping from buttons to indices for common joysticks in the [wiki](https://wiki.ros.org/joy). 
+3. Joystick
+[Joystick](https://www.amazon.com/Logitech-Wireless-Nano-Receiver-Controller-Vibration/dp/B0041RR0TW)/[keyboard teleop](http://wiki.ros.org/teleop_twist_keyboard) that works with Linux. Add the index mapping for the _deadman_switch_ on the joystick to the `vint_release/deployment/config/joystick.yaml`. You can find the mapping from buttons to indices for common joysticks in the [wiki](https://wiki.ros.org/joy). 
 
 
-### [TODO]Loading the model weights
+### Software Setup
+#### Loading the model weights
 
-Save the model weights *.pth file in `vint_release/deployment/model_weights` folder. Our model's weights are in [this link](https://drive.google.com/drive/folders/1a9yWR2iooXFAqjQHetz263--4_2FFggg?usp=sharing).
+Save the model weights *.pth file in `./deployment/model_weights` folder. Our model's weights are in [this link](https://drive.google.com/drive/folders/19yJcSJvGmpGlo0X-0owQKrrkPFmPKVt8?usp=sharing).
 
-### [TODO]Collecting a Topological Map
+#### Last-mile Navigation
+
+
+#### Long-distance Navigation
+
+##### [TODO]Collecting a Topological Map
 
 _Make sure to run these scripts inside the `vint_release/deployment/src/` directory._
 
 
 This section discusses a simple way to create a topological map of the target environment for deployment. For simplicity, we will use the robot in “path-following” mode, i.e. given a single trajectory in an environment, the task is to follow the same trajectory to the goal. The environment may have new/dynamic obstacles, lighting variations etc.
 
-#### [TODO]Record the rosbag: 
+##### [TODO]Record the rosbag: 
 ```bash
 ./record_bag.sh <bag_name>
 ```
@@ -165,7 +139,7 @@ Run this command to teleoperate the robot with the joystick and camera. This com
 
 Once you are ready to record the bag, run the `rosbag record` script and teleoperate the robot on the map you want the robot to follow. When you are finished with recording the path, kill the `rosbag record` command, and then kill the tmux session.
 
-#### [TODO]Make the topological map: 
+##### [TODO]Make the topological map: 
 ```bash
 ./create_topomap.sh <topomap_name> <bag_filename>
 ```
@@ -178,8 +152,7 @@ This command opens up 3 windows:
 When the bag stops playing, kill the tmux session.
 
 
-### [TODO]Running the model 
-#### [TODO]Navigation
+#### Running the model 
 _Make sure to run this script inside the `vint_release/deployment/src/` directory._
 
 ```bash
@@ -206,11 +179,6 @@ This command opens up 4 windows:
 4. `python pd_controller.py`: This python script starts a node that reads messages from the `/waypoint` topic (waypoints from the model) and outputs velocities to navigate the robot’s base.
 
 When the robot is finishing navigating, kill the `pd_controller.py` script, and then kill the tmux session. If you want to take control of the robot while it is navigating, the `joy_teleop.py` script allows you to do so with the joystick.
-
-### [TODO]Adapting this code to different robots
-
-We hope that this codebase is general enough to allow you to deploy it to your favorite ROS-based robots. You can change the robot configuration parameters in `vint_release/deployment/config/robot.yaml`, like the max angular and linear velocities of the robot and the topics to publish to teleop and control the robot. Please feel free to create a Github Issue or reach out to the authors at shah@cs.berkeley.edu.
-
 
 ## Citing
 ```

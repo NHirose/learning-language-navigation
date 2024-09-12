@@ -618,22 +618,8 @@ def twist_to_pose_diff_torch(v, w, dt):
     x = -v * dt * sinc_apx(-theta / (2 * np.pi)) * torch.sin(-theta / 2)
     return x, z, theta
 
-def robot_pos_model(linear_vel, angular_vel):
-    bs, chorizon = linear_vel.shape
-    device = linear_vel.device
-    px_ref = torch.zeros(bs).to(device)
-    pz_ref = torch.zeros(bs).to(device)
-    ry_ref = torch.zeros(bs).to(device)
-
-    #print(chorizon)
-    for j in range(chorizon):
-        ry_ref = ry_ref - angular_vel[:, j] * 0.33
-        pz_ref = pz_ref + linear_vel[:, j] * 0.33 * sinc_apx(-ry_ref/3.1415)
-        px_ref = px_ref - linear_vel[:, j] * 0.33 * sinc_apx(-ry_ref/(2*3.1415)) * torch.sin(-ry_ref / 2.0)
-    #print("x, z, yaw", px_ref, pz_ref, ry_ref)    
-    return px_ref, pz_ref, ry_ref
-
 def robot_pos_model_fix(linear_vel, angular_vel):
+    # velocity commands integral
     bs, chorizon = linear_vel.shape
     device = linear_vel.device
 
@@ -649,43 +635,16 @@ def robot_pos_model_fix(linear_vel, angular_vel):
         Todom[:, 1, 1] = 1.0
         Todom[:, 2, 0] = -torch.sin(yaw)
         Todom[:, 2, 2] = torch.cos(yaw)
-        Todom[:, 0, 3] = x #weighting for position
-        Todom[:, 2, 3] = z #weighting for position
+        Todom[:, 0, 3] = x
+        Todom[:, 2, 3] = z
         Todom[:, 3, 3] = 1.0        
         
-        #Tacc = Tacc @ Todom
         Tacc = torch.matmul(Tacc, Todom)
-        
-        #Taccd = Tacc.clone()
-        #Taccd[:, 0, 3] = 2.0*Tacc.clone()[:, 0, 3]
-        #Taccd[:, 2, 3] = 2.0*Tacc.clone()[:, 2, 3]        
+               
         pyaw.append(torch.arctan(Tacc[:, 0, 2]/(Tacc[:, 0, 0] + 0.000000001)))        
         px.append(Tacc[:, 0, 3])
         pz.append(Tacc[:, 2, 3])        
-    return px, pz, pyaw
-                        
-def robot_pos_model_vis(linear_vel, angular_vel):
-    bs, chorizon = linear_vel.shape
-    device = linear_vel.device
-    px_ref = torch.zeros(bs).to(device)
-    pz_ref = torch.zeros(bs).to(device)
-    ry_ref = torch.zeros(bs).to(device)
-    
-    px = []
-    pz = []
-    px.append(px_ref.unsqueeze(1))
-    pz.append(pz_ref.unsqueeze(1))
-        
-    for j in range(chorizon):
-        ry_ref = ry_ref - angular_vel[:, j] * 0.33
-        pz_ref = pz_ref + linear_vel[:, j] * 0.33 * sinc_apx(-ry_ref/3.1415)
-        px_ref = px_ref - linear_vel[:, j] * 0.33 * sinc_apx(-ry_ref/(2*3.1415)) * torch.sin(-ry_ref / 2.0)
-    
-        px.append(px_ref.unsqueeze(1))
-        pz.append(pz_ref.unsqueeze(1))
-        
-    return torch.cat(px, axis=1), torch.cat(pz, axis=1)
-    
+    return px, pz, pyaw    
 
 def train_lelan(
     model: nn.Module,
@@ -694,11 +653,8 @@ def train_lelan(
     dataloader: DataLoader,
     transform: transforms,
     device: torch.device,
-    #noise_scheduler: DDPMScheduler,
-    #goal_mask_prob: float,
     project_folder: str,
     epoch: int,
-    alpha: float = 1e-4,
     print_log_freq: int = 100,
     wandb_log_freq: int = 10,
     image_log_freq: int = 1000,
@@ -715,42 +671,21 @@ def train_lelan(
         dataloader: dataloader for training
         transform: transform to use
         device: device to use
-        noise_scheduler: noise scheduler to train with 
         project_folder: folder to save images to
         epoch: current epoch
-        alpha: weight of action loss
         print_log_freq: how often to print loss
+        wandb_log_freq: how often to log with wandb
         image_log_freq: how often to log images
         num_images_log: number of images to log
         use_wandb: whether to use wandb
     """
-    #goal_mask_prob = torch.clip(torch.tensor(goal_mask_prob), 0, 1)
     model.train()
     model.eval_text_encoder()
-    #print("eval model for text encoder!!")
     num_batches = len(dataloader)
-    """
-    uc_action_loss_logger = Logger("uc_action_loss", "train", window_size=print_log_freq)
-    uc_action_waypts_cos_sim_logger = Logger(
-        "uc_action_waypts_cos_sim", "train", window_size=print_log_freq
-    )
-    uc_multi_action_waypts_cos_sim_logger = Logger(
-        "uc_multi_action_waypts_cos_sim", "train", window_size=print_log_freq
-    )
-    gc_dist_loss_logger = Logger("gc_dist_loss", "train", window_size=print_log_freq)
-    gc_action_loss_logger = Logger("gc_action_loss", "train", window_size=print_log_freq)
-    gc_action_waypts_cos_sim_logger = Logger(
-        "gc_action_waypts_cos_sim", "train", window_size=print_log_freq
-    )
-    gc_multi_action_waypts_cos_sim_logger = Logger(
-        "gc_multi_action_waypts_cos_sim", "train", window_size=print_log_freq
-    )
-    """
+
     total_loss_logger = Logger("total loss", "train", window_size=print_log_freq)    
     pose_loss_logger = Logger("pose loss", "train", window_size=print_log_freq)
-    smooth_loss_logger = Logger(
-        "smooth loss", "train", window_size=print_log_freq
-    )    
+    smooth_loss_logger = Logger("smooth loss", "train", window_size=print_log_freq)    
     loggers = {
         "total loss": total_loss_logger,    
         "pose loss": pose_loss_logger,
@@ -766,150 +701,37 @@ def train_lelan(
                 goal_pos_norm,                
             ) = data
             
-            #print(obs_image.size())
             obs_images_list = torch.split(obs_images, 3, dim=1)
             obs_image = obs_images_list[-1]              
             
             batch_viz_obs_images = TF.resize((127.5*obs_image + 127.5).type(torch.uint8), VISUALIZATION_IMAGE_SIZE[::-1])
             batch_viz_goal_images = TF.resize((127.5*goal_image + 127.5).type(torch.uint8), VISUALIZATION_IMAGE_SIZE[::-1])
-            #batch_viz_obs_images = TF.resize(0.5*(obs_image + 1.0), VISUALIZATION_IMAGE_SIZE[::-1])
-            #batch_viz_goal_images = TF.resize(0.5*(goal_image + 1.0), VISUALIZATION_IMAGE_SIZE[::-1])
-                        
-            #mid = (127.5*obs_image + 127.5)            
-            #print("vis", batch_viz_obs_images.max(), batch_viz_obs_images.min(), batch_viz_obs_images.median(), batch_viz_obs_images.type(), batch_viz_obs_images.size())
-            #print("train", obs_image.max(), obs_image.min(), obs_image.median(), obs_image.type(), obs_image.size())           
-            #print("mid", mid.max(), mid.min(), mid.median(), mid.type(), mid.size())                    
+                
             batch_obs_images = obs_image.to(device)
-            #batch_goal_images = goal_image.to(device)
             batch_obj_poses = obj_poses.to(device)
             
-            #print(obj_inst)
             batch_obj_inst = clip.tokenize(obj_inst, truncate=True).to(device)          
             
             with torch.no_grad():  
                 feat_text = model("text_encoder", inst_ref=batch_obj_inst)
             
-            #TODO contrastive loss
-            #batch_goal_images = goal_image.to(device)
-            #feat_image = model("vision_encoder_clip", goal_img=batch_goal_images)
-            
-            #obs_images = torch.split(obs_image, 3, dim=1)
-            #batch_viz_obs_images = TF.resize(obs_images[-1], VISUALIZATION_IMAGE_SIZE[::-1])
-            #batch_viz_goal_images = TF.resize(goal_image, VISUALIZATION_IMAGE_SIZE[::-1])
-            #batch_obs_images = [transform(obs) for obs in obs_images]
-            #batch_obs_images = torch.cat(batch_obs_images, dim=1).to(device)
-            #batch_goal_images = transform(goal_image).to(device)
-            #action_mask = action_mask.to(device)
-
-            #B = actions.shape[0]
             B = batch_obs_images.shape[0]
             
-            # Generate random goal mask
-            #goal_mask = (torch.rand((B,)) < goal_mask_prob).long().to(device)
-            #obsgoal_cond = model("vision_encoder", obs_img=batch_obs_images, goal_img=batch_goal_images, input_goal_mask=goal_mask)
-            
-            #print("batch_obs_images", batch_obs_images.size())
-            #print(feat_text.dtype)
             obsgoal_cond = model("vision_encoder", obs_img=batch_obs_images, feat_text = feat_text.to(dtype=torch.float32))
-            #obsgoal_cond = model("vision_encoder", obs_img=batch_obs_images, inst_ref = batch_obj_inst)
-            #print("feat", obsgoal_cond.size())
-            
-            """            
-            # Get distance label
-            distance = distance.float().to(device)
-
-            print("actions", actions.shape)
-            deltas = get_delta(actions)
-            print("deltas", deltas.shape)            
-            ndeltas = normalize_data(deltas, ACTION_STATS)
-            print("ndeltas", ndeltas.shape)             
-            naction = from_numpy(ndeltas).to(device)
-            print("naction", naction.shape)                     
-            assert naction.shape[-1] == 2, "action dim must be 2"
-            """
-            # Predict distance
-            #dist_pred = model("dist_pred_net", obsgoal_cond=obsgoal_cond)
             linear_vel, angular_vel = model("dist_pred_net", obsgoal_cond=obsgoal_cond)
-            #print("vel", linear_vel.size())
-            #print(linear_vel.max(), linear_vel.min(), angular_vel.max(), angular_vel.min())
-            #print(linear_vel.size(), angular_vel.size(), linear_vel.device, angular_vel.device)
-            
-            #bs, vs = angular_vel.size()
-            #linear_vel = 0.5*torch.ones(bs, vs).float().cuda()
-            #angular_vel = 0.1*torch.ones(bs, vs).float().cuda()            
-            #print("vel size", bs, vs)
+
             px_ref_list, pz_ref_list, ry_ref_list = robot_pos_model_fix(linear_vel, angular_vel)
             px_ref = px_ref_list[-1]
             pz_ref = pz_ref_list[-1]
             ry_ref = ry_ref_list[-1]
-            #print("velocity", linear_vel.mean(), angular_vel.mean())
-            #print("last pose", px_ref.mean(), pz_ref.mean())       
-            #print("goal_pos", batch_obj_poses[:,0].mean(), batch_obj_poses[:,1].mean(), batch_obj_poses.size())                 
-            #batch_px_list, batch_pz_list = robot_pos_model_vis(linear_vel, angular_vel)
-            #x_seq = to_numpy(batch_px_list[i])
-            #z_seq = to_numpy(batch_pz_list[i])
-       
-            #print("new", px_ref[0].size(), pz_ref[0].size(), ry_ref[0].size(), len(px_ref), len(pz_ref), len(ry_ref))
-            #print("new", px_ref_list[-1][0], pz_ref_list[-1][0], ry_ref_list[-1][0])            
-            #px_ref, pz_ref, ry_ref = robot_pos_model(linear_vel, angular_vel)
-            #print("old", px_ref[0], pz_ref[0], ry_ref[0])            
+ 
             last_poses = torch.cat((px_ref.unsqueeze(1), pz_ref.unsqueeze(1)), axis=1)
-            #print("x, z, yaw", px_ref.size(),  pz_ref.size(),  ry_ref.size(), obj_poses.size(), last_poses.device)
-
-            """
-            for i in range(24):
-                plt.plot(px_ref_list[i][0].cpu().numpy(), pz_ref_list[i][0].cpu().numpy(), color='blue', marker = "x")
-        
-            plt.plot(x_seq, z_seq, marker = 'o', color='blue')
-            
-            plt.show()  
-            """
                                 
             dist_loss = nn.functional.mse_loss(last_poses, batch_obj_poses)   
             diff_loss = nn.functional.mse_loss(linear_vel[:,:-1], linear_vel[:,1:]) + nn.functional.mse_loss(angular_vel[:,:-1], angular_vel[:,1:]) 
             
-            #print(torch.sum((last_poses - batch_obj_poses)**2, axis=1))            
-            #print("dist_loss", dist_loss)        
-            #dist_loss = nn.functional.mse_loss(dist_pred.squeeze(-1), distance)
-            #dist_loss = (dist_loss * (1 - goal_mask.float())).mean() / (1e-2 +(1 - goal_mask.float()).mean())
-
-            """
-            # Sample noise to add to actions
-            noise = torch.randn(naction.shape, device=device)
-
-            # Sample a diffusion iteration for each data point
-            timesteps = torch.randint(
-                0, noise_scheduler.config.num_train_timesteps,
-                (B,), device=device
-            ).long()
-            print(noise_scheduler.config.num_train_timesteps, B, timesteps.size())
-
-            # Add noise to the clean images according to the noise magnitude at each diffusion iteration
-            noisy_action = noise_scheduler.add_noise(
-                naction, noise, timesteps)
-            print("noisy_action", noisy_action.size())
-            print("timesteps", timesteps.size())
-            print("obsgoal_cond", obsgoal_cond.size())            
-                        
-            # Predict the noise residual
-            noise_pred = model("noise_pred_net", sample=noisy_action, timestep=timesteps, global_cond=obsgoal_cond)
-
-            print("noise_pred", noise_pred.size(), "noise", noise.size())
-
-            def action_reduce(unreduced_loss: torch.Tensor):
-                # Reduce over non-batch dimensions to get loss per batch element
-                while unreduced_loss.dim() > 1:
-                    unreduced_loss = unreduced_loss.mean(dim=-1)
-                assert unreduced_loss.shape == action_mask.shape, f"{unreduced_loss.shape} != {action_mask.shape}"
-                return (unreduced_loss * action_mask).mean() / (action_mask.mean() + 1e-2)
-
-            # L2 loss
-            diffusion_loss = action_reduce(F.mse_loss(noise_pred, noise, reduction="none"))
-            """
             # Total loss
-            #loss = alpha * dist_loss + (1-alpha) * diffusion_loss # mse between ground truth noise and predicted noise
             loss = dist_loss + 1.0*diff_loss
-            #print("dist_loss", dist_loss, "diff_loss", diff_loss)
 
             # Optimize
             optimizer.zero_grad()
@@ -928,18 +750,6 @@ def train_lelan(
             wandb.log({"vel smooth loss": diff_loss.item()})
 
             if i % print_log_freq == 0:
-                """
-                losses = _compute_losses_nomad(
-                            ema_model.averaged_model,
-                            noise_scheduler,
-                            batch_obs_images,
-                            batch_goal_images,
-                            distance.to(device),
-                            actions.to(device),
-                            device,
-                            action_mask.to(device),
-                        )
-                """
                 losses = {}
                 losses['total loss'] = loss_cpu
                 losses['pose loss'] = dist_loss.item()
@@ -986,11 +796,9 @@ def train_lelan_col(
     transform: transforms,
     device: torch.device,
     noise_scheduler: DDPMScheduler,
-    #goal_mask_prob: float,
     project_folder: str,
     weight_col_loss: float,    
     epoch: int,
-    alpha: float = 1e-4,
     print_log_freq: int = 100,
     wandb_log_freq: int = 10,
     image_log_freq: int = 1000,
@@ -1003,15 +811,17 @@ def train_lelan_col(
     Args:
         model: model to train
         ema_model: exponential moving average model
+        ema_model_nomad: exponential moving average model of pre-trained NoMaD policy for cropped goal image        
         optimizer: optimizer to use
         dataloader: dataloader for training
         transform: transform to use
         device: device to use
         noise_scheduler: noise scheduler to train with 
         project_folder: folder to save images to
+        weight_col_loss: weight for collision avoindace loss
         epoch: current epoch
-        alpha: weight of action loss
         print_log_freq: how often to print loss
+        wandb_log_freq: how often to log with wandb
         image_log_freq: how often to log images
         num_images_log: number of images to log
         use_wandb: whether to use wandb
@@ -1022,23 +832,7 @@ def train_lelan_col(
     ema_model_nomad = ema_model_nomad.averaged_model
     ema_model_nomad.eval()    
     num_batches = len(dataloader)
-    """
-    uc_action_loss_logger = Logger("uc_action_loss", "train", window_size=print_log_freq)
-    uc_action_waypts_cos_sim_logger = Logger(
-        "uc_action_waypts_cos_sim", "train", window_size=print_log_freq
-    )
-    uc_multi_action_waypts_cos_sim_logger = Logger(
-        "uc_multi_action_waypts_cos_sim", "train", window_size=print_log_freq
-    )
-    gc_dist_loss_logger = Logger("gc_dist_loss", "train", window_size=print_log_freq)
-    gc_action_loss_logger = Logger("gc_action_loss", "train", window_size=print_log_freq)
-    gc_action_waypts_cos_sim_logger = Logger(
-        "gc_action_waypts_cos_sim", "train", window_size=print_log_freq
-    )
-    gc_multi_action_waypts_cos_sim_logger = Logger(
-        "gc_multi_action_waypts_cos_sim", "train", window_size=print_log_freq
-    )
-    """
+
     total_loss_logger = Logger("total loss", "train", window_size=print_log_freq)    
     pose_loss_logger = Logger("pose loss", "train", window_size=print_log_freq)
     smooth_loss_logger = Logger("smooth loss", "train", window_size=print_log_freq)    
@@ -1087,18 +881,15 @@ def train_lelan_col(
             batch_goal_images_list = torch.split(batch_goal_images, B, dim=0)
 
             with torch.no_grad():
-                select_traj = supervision_from_diffusion_action_distribution(
+                select_traj = supervision_from_nomad(
                     ema_model_nomad,
                     noise_scheduler,
                     batch_obs_images,
                     batch_goal_images,
                     batch_viz_obs_images,
                     batch_viz_goal_images,
-                    #actions,
-                    #distance,
                     batch_goal_pos_norm,
                     device,
-                    #eval_type,
                     project_folder,
                     epoch,
                     B,
@@ -1402,8 +1193,6 @@ def evaluate_lelan(
     dataloader: DataLoader,
     transform: transforms,
     device: torch.device,
-    #noise_scheduler: DDPMScheduler,
-    #goal_mask_prob: float,
     project_folder: str,
     epoch: int,
     print_log_freq: int = 100,
@@ -1423,57 +1212,12 @@ def evaluate_lelan(
         dataloader (DataLoader): dataloader for eval
         transform (transforms): transform to apply to images
         device (torch.device): device to use for evaluation
-        noise_scheduler: noise scheduler to evaluate with 
         project_folder (string): path to project folder
         epoch (int): current epoch    total_loss_logger = Logger("total loss", "train", window_size=print_log_freq)    
-    pose_loss_logger = Logger("pose loss", "train", window_size=print_log_freq)
-    smooth_loss_logger = Logger(
-        "smooth loss", "train", window_size=print_log_freq
-    )    
-    loggers = {
-        "total loss": total_loss_logger,    
-        "pose loss": pose_loss_logger,
-        "vel smooth loss": smooth_loss_logger,
-    }
-        print_log_freq (int): how often to print logs 
-        wandb_log_freq (int): how often to log to wandb
-        image_log_freq (int): how often to log images
-        alpha (float): weight for action loss
-        num_images_log (int): number of images to log
-        eval_fraction (float): fraction of data to use for evaluation
-        use_wandb (bool): whether to use wandb for logging
     """
-    #goal_mask_prob = torch.clip(torch.tensor(goal_mask_prob), 0, 1)
-    #ema_model = ema_model.averaged_model #TODO for diffusion policy
-    ema_model.eval()
-    
+    ema_model.eval()    
     num_batches = len(dataloader)
-    """
-    uc_action_loss_logger = Logger("uc_action_loss", eval_type, window_size=print_log_freq)
-    uc_action_waypts_cos_sim_logger = Logger(
-        "uc_action_waypts_cos_sim", eval_type, window_size=print_log_freq
-    )
-    uc_multi_action_waypts_cos_sim_logger = Logger(
-        "uc_multi_action_waypts_cos_sim", eval_type, window_size=print_log_freq
-    )
-    gc_dist_loss_logger = Logger("gc_dist_loss", eval_type, window_size=print_log_freq)
-    gc_action_loss_logger = Logger("gc_action_loss", eval_type, window_size=print_log_freq)
-    gc_action_waypts_cos_sim_logger = Logger(
-        "gc_action_waypts_cos_sim", eval_type, window_size=print_log_freq
-    )
-    gc_multi_action_waypts_cos_sim_logger = Logger(
-        "gc_multi_action_waypts_cos_sim", eval_type, window_size=print_log_freq
-    )
-    loggers = {
-        "uc_action_loss": uc_action_loss_logger,
-        "uc_action_waypts_cos_sim": uc_action_waypts_cos_sim_logger,
-        "uc_multi_action_waypts_cos_sim": uc_multi_action_waypts_cos_sim_logger,
-        "gc_dist_loss": gc_dist_loss_logger,
-        "gc_action_loss": gc_action_loss_logger,
-        "gc_action_waypts_cos_sim": gc_action_waypts_cos_sim_logger,
-        "gc_multi_action_waypts_cos_sim": gc_multi_action_waypts_cos_sim_logger,
-    }
-    """
+
     total_loss_logger = Logger("total loss", eval_type, window_size=print_log_freq)    
     pose_loss_logger = Logger("pose loss", eval_type, window_size=print_log_freq)
     smooth_loss_logger = Logger("smooth loss", eval_type, window_size=print_log_freq)     
@@ -1509,78 +1253,24 @@ def evaluate_lelan(
             obs_image = obs_images_list[-1]       
             
             batch_viz_obs_images = TF.resize((127.5*obs_image + 127.5).type(torch.uint8), VISUALIZATION_IMAGE_SIZE[::-1])
-            batch_viz_goal_images = TF.resize((127.5*goal_image + 127.5).type(torch.uint8), VISUALIZATION_IMAGE_SIZE[::-1])
-            #batch_viz_obs_images = TF.resize(0.5*(obs_image + 1.0), VISUALIZATION_IMAGE_SIZE[::-1])
-            #batch_viz_goal_images = TF.resize(0.5*(goal_image + 1.0), VISUALIZATION_IMAGE_SIZE[::-1])
-                        
-            #mid = (127.5*obs_image + 127.5)            
-            #print("vis", batch_viz_obs_images.max(), batch_viz_obs_images.min(), batch_viz_obs_images.median(), batch_viz_obs_images.type(), batch_viz_obs_images.size())
-            #print("train", obs_image.max(), obs_image.min(), obs_image.median(), obs_image.type(), obs_image.size())           
-            #print("mid", mid.max(), mid.min(), mid.median(), mid.type(), mid.size())                    
+            batch_viz_goal_images = TF.resize((127.5*goal_image + 127.5).type(torch.uint8), VISUALIZATION_IMAGE_SIZE[::-1])         
             batch_obs_images = obs_image.to(device)
-            #batch_goal_images = goal_image.to(device)
             batch_obj_poses = obj_poses.to(device)
             
-            #print(obj_inst)
-            
+            B = batch_obs_images.shape[0]
             with torch.no_grad():
-                batch_obj_inst = clip.tokenize(obj_inst, truncate=True).to(device)       
-                #print(batch_obj_inst.size())     
-                feat_text = ema_model("text_encoder", inst_ref=batch_obj_inst)
-                #print(feat_text.size(), feat_text.dtype, batch_obj_inst.size(), batch_obj_inst.dtype)
-                
-                #feat_text_16 = feat_text.to(torch.float16)    
-                #feat_text = feat_text_16.to(torch.float32)   
-                #print(feat_text_16.dtype)                
-                                
-                B = batch_obs_images.shape[0]
-
-                #print(batch_obs_images.dtype, batch_obs_images.size(), batch_obs_images.min(), batch_obs_images.max())                    
-                #print("batch_obs_images", batch_obs_images.size(), num_batches, eval_fraction, B)
+                batch_obj_inst = clip.tokenize(obj_inst, truncate=True).to(device)          
+                feat_text = ema_model("text_encoder", inst_ref=batch_obj_inst)                  
                 obsgoal_cond = ema_model("vision_encoder", obs_img=batch_obs_images, feat_text = feat_text.to(dtype=torch.float32))
-
-                #obsgoal_cond_16 = obsgoal_cond.to(torch.float16)    
-                #obsgoal_cond_16 = obsgoal_cond_16.to(torch.float32)   
-            
-                #print("before flatten", obsgoal_cond.size())
-                #obsgoal_cond = obsgoal_cond.flatten(start_dim=1)
-                #print("after flatten", obsgoal_cond.size())
-                        
                 linear_vel, angular_vel = ema_model("dist_pred_net", obsgoal_cond=obsgoal_cond)
-                #print(linear_vel.size(), angular_vel.size())
-                            
-                #print(obj_inst[0])
-                #print(feat_text[0])
-                #print(batch_obj_inst.dtype, batch_obs_images.dtype, feat_text.dtype, obsgoal_cond.dtype)
+                
                 px_ref_list, pz_ref_list, ry_ref_list = robot_pos_model_fix(linear_vel, angular_vel)
                 px_ref = px_ref_list[-1]
                 pz_ref = pz_ref_list[-1]
                 ry_ref = ry_ref_list[-1]
-                #px_ref, pz_ref, ry_ref = robot_pos_model(linear_vel, angular_vel)
                                                     
             last_poses = torch.cat((px_ref.unsqueeze(1), pz_ref.unsqueeze(1)), axis=1)
                         
-            #print(last_poses.size(), batch_obj_poses.size())
-            """
-            last_poses_select = []
-            batch_obj_poses_select = []
-            #print("before", last_poses.size(), batch_obj_poses.size())
-                        
-            for ir in range(len(obj_inst)):
-                text_split = obj_inst[ir].split(" ")
-                #print(text_split)
-                flag_remove = 0
-                #print("door" in text_split)
-                if ("door" in text_split) or ("chair" in text_split) or ("wall" in text_split) or ("glass" in text_split) or ("device" in text_split) or ("window" in text_split) or ("handle" in text_split) or ("cabinet" in text_split):
-                    flag_remove = 1
-                else:
-                    last_poses_select.append(last_poses[ir].unsqueeze(0))
-                    batch_obj_poses_select.append(batch_obj_poses[ir].unsqueeze(0))
-            
-            last_poses = torch.cat(last_poses_select, axis=0)
-            batch_obj_poses = torch.cat(batch_obj_poses_select, axis=0)                                
-            #print("after", last_poses.size(), batch_obj_poses.size())            
-            """
             dist_loss = nn.functional.mse_loss(last_poses, batch_obj_poses)   
             diff_loss = nn.functional.mse_loss(linear_vel[:,:-1], linear_vel[:,1:]) + nn.functional.mse_loss(angular_vel[:,:-1], angular_vel[:,1:]) 
                         
@@ -1588,9 +1278,6 @@ def evaluate_lelan(
             loss_cpu = dist_loss.item()
             tepoch.set_postfix(loss=loss_cpu)
 
-            #wandb.log({"diffusion_eval_loss (random masking)": dist_loss})
-            #wandb.log({"diffusion_eval_loss (no masking)": dist_loss})
-            #wandb.log({"diffusion_eval_loss (goal masking)": dist_loss})
             wandb.log({"total_eval_loss": (dist_loss + 1.0*diff_loss).item()})
             wandb.log({"dist_eval_loss": dist_loss.item()})
             wandb.log({"diff_eval_loss": diff_loss.item()})
@@ -1600,23 +1287,7 @@ def evaluate_lelan(
             all_diff += diff_loss.item()
             count_batch += 1.0
             data_size += B
-            if i % print_log_freq == 0 and print_log_freq != 0:
-                """
-                losses = _compute_losses_nomad(
-                            ema_model,
-                            noise_scheduler,
-                            batch_obs_images,
-                            batch_goal_images,
-                            distance.to(device),
-                            actions.to(device),
-                            device,
-                            action_mask.to(device),
-                        )
-                """
-                #losses = {}
-                #losses['uc_actions'] = 0.0
-                #losses['gc_actions'] = 0.0
-                #losses['gc_distance'] = 0.0   
+            if i % print_log_freq == 0 and print_log_freq != 0: 
                 losses = {}
                 losses['total loss'] = loss_cpu
                 losses['pose loss'] = dist_loss.item()
@@ -1662,7 +1333,6 @@ def evaluate_lelan_col(
     transform: transforms,
     device: torch.device,
     noise_scheduler: DDPMScheduler,
-    #goal_mask_prob: float,
     project_folder: str,
     weight_col_loss: float,    
     epoch: int,
@@ -1680,60 +1350,21 @@ def evaluate_lelan_col(
     Args:
         eval_type (string): f"{data_type}_{eval_type}" (e.g. "recon_train", "gs_test", etc.)
         ema_model (nn.Module): exponential moving average version of model to evaluate
+        ema_model_nomad (nn.Module): exponential moving average version of pre-trained NoMaD policy
         dataloader (DataLoader): dataloader for eval
         transform (transforms): transform to apply to images
         device (torch.device): device to use for evaluation
         noise_scheduler: noise scheduler to evaluate with 
         project_folder (string): path to project folder
+        weight_col_loss (float) : weight for collision avoidance loss 
         epoch (int): current epoch    total_loss_logger = Logger("total loss", "train", window_size=print_log_freq)    
-    pose_loss_logger = Logger("pose loss", "train", window_size=print_log_freq)
-    smooth_loss_logger = Logger(
-        "smooth loss", "train", window_size=print_log_freq
-    )    
-    loggers = {
-        "total loss": total_loss_logger,    
-        "pose loss": pose_loss_logger,
-        "vel smooth loss": smooth_loss_logger,
-    }
-        print_log_freq (int): how often to print logs 
-        wandb_log_freq (int): how often to log to wandb
-        image_log_freq (int): how often to log images
-        alpha (float): weight for action loss
-        num_images_log (int): number of images to log
-        eval_fraction (float): fraction of data to use for evaluation
-        use_wandb (bool): whether to use wandb for logging
     """
 
     ema_model.eval()
     ema_model_nomad = ema_model_nomad.averaged_model
     ema_model_nomad.eval()       
     num_batches = len(dataloader)
-    """
-    uc_action_loss_logger = Logger("uc_action_loss", eval_type, window_size=print_log_freq)
-    uc_action_waypts_cos_sim_logger = Logger(
-        "uc_action_waypts_cos_sim", eval_type, window_size=print_log_freq
-    )
-    uc_multi_action_waypts_cos_sim_logger = Logger(
-        "uc_multi_action_waypts_cos_sim", eval_type, window_size=print_log_freq
-    )
-    gc_dist_loss_logger = Logger("gc_dist_loss", eval_type, window_size=print_log_freq)
-    gc_action_loss_logger = Logger("gc_action_loss", eval_type, window_size=print_log_freq)
-    gc_action_waypts_cos_sim_logger = Logger(
-        "gc_action_waypts_cos_sim", eval_type, window_size=print_log_freq
-    )
-    gc_multi_action_waypts_cos_sim_logger = Logger(
-        "gc_multi_action_waypts_cos_sim", eval_type, window_size=print_log_freq
-    )
-    loggers = {
-        "uc_action_loss": uc_action_loss_logger,
-        "uc_action_waypts_cos_sim": uc_action_waypts_cos_sim_logger,
-        "uc_multi_action_waypts_cos_sim": uc_multi_action_waypts_cos_sim_logger,
-        "gc_dist_loss": gc_dist_loss_logger,
-        "gc_action_loss": gc_action_loss_logger,
-        "gc_action_waypts_cos_sim": gc_action_waypts_cos_sim_logger,
-        "gc_multi_action_waypts_cos_sim": gc_multi_action_waypts_cos_sim_logger,
-    }
-    """
+
     total_loss_logger = Logger("total loss", eval_type, window_size=print_log_freq)    
     pose_loss_logger = Logger("pose loss", eval_type, window_size=print_log_freq)
     smooth_loss_logger = Logger("smooth loss", eval_type, window_size=print_log_freq)    
@@ -1772,37 +1403,30 @@ def evaluate_lelan_col(
             obs_image = obs_images_list[-1]              
             
             batch_viz_obs_images = TF.resize((127.5*obs_image + 127.5).type(torch.uint8), VISUALIZATION_IMAGE_SIZE[::-1])
-            batch_viz_goal_images = TF.resize((127.5*goal_image + 127.5).type(torch.uint8), VISUALIZATION_IMAGE_SIZE[::-1])
-                                          
+            batch_viz_goal_images = TF.resize((127.5*goal_image + 127.5).type(torch.uint8), VISUALIZATION_IMAGE_SIZE[::-1])                                          
             batch_obs_current = obs_image.to(device)
-
             goal_pos = goal_pos.to(device)
-            goal_pos_norm = goal_pos_norm.to(device)      
-                        
+            goal_pos_norm = goal_pos_norm.to(device)                              
             batch_obs_images = [transform(TF.resize(obs, (96, 96), antialias=True)) for obs in obs_images_list]
             batch_obs_images = torch.cat(batch_obs_images, dim=1).to(device)
             batch_goal_images = transform(TF.resize(goal_image, (96, 96), antialias=True)).to(device)
             
             B = batch_obs_images.shape[0]
-            action_mask = torch.ones(B).to(device)
                         
             # split into batches
             batch_obs_images_list = torch.split(batch_obs_images, B, dim=0)
             batch_goal_images_list = torch.split(batch_goal_images, B, dim=0)
 
             with torch.no_grad():
-                select_traj = supervision_from_diffusion_action_distribution(
+                select_traj = supervision_from_nomad(
                     ema_model_nomad,
                     noise_scheduler,
                     batch_obs_images,
                     batch_goal_images,
                     batch_viz_obs_images,
                     batch_viz_goal_images,
-                    #actions,
-                    #distance,
                     goal_pos_norm,
                     device,
-                    #eval_type,
                     project_folder,
                     epoch,
                     B,
@@ -1843,9 +1467,6 @@ def evaluate_lelan_col(
             loss_cpu = dist_loss.item()
             tepoch.set_postfix(loss=loss_cpu)
 
-            #wandb.log({"diffusion_eval_loss (random masking)": dist_loss})
-            #wandb.log({"diffusion_eval_loss (no masking)": dist_loss})
-            #wandb.log({"diffusion_eval_loss (goal masking)": dist_loss})
             wandb.log({"total_eval_loss": (dist_loss + 1.0*diff_loss + weight_col_loss*col_loss).item()})
             wandb.log({"dist_eval_loss": dist_loss.item()})
             wandb.log({"diff_eval_loss": diff_loss.item()})
@@ -1858,22 +1479,6 @@ def evaluate_lelan_col(
             count_batch += 1.0
             data_size += B
             if i % print_log_freq == 0 and print_log_freq != 0:
-                """
-                losses = _compute_losses_nomad(
-                            ema_model,
-                            noise_scheduler,
-                            batch_obs_images,
-                            batch_goal_images,
-                            distance.to(device),
-                            actions.to(device),
-                            device,
-                            action_mask.to(device),
-                        )
-                """
-                #losses = {}
-                #losses['uc_actions'] = 0.0
-                #losses['gc_actions'] = 0.0
-                #losses['gc_distance'] = 0.0   
                 losses = {}
                 losses['total loss'] = loss_cpu
                 losses['pose loss'] = dist_loss.item()
@@ -2167,12 +1772,10 @@ def model_output(
 ):
     goal_mask = torch.ones((batch_goal_images.shape[0],)).long().to(device)
     obs_cond = model("vision_encoder", obs_img=batch_obs_images, goal_img=batch_goal_images, input_goal_mask=goal_mask)
-    # obs_cond = obs_cond.flatten(start_dim=1)
     obs_cond = obs_cond.repeat_interleave(num_samples, dim=0)
 
     no_mask = torch.zeros((batch_goal_images.shape[0],)).long().to(device)
     obsgoal_cond = model("vision_encoder", obs_img=batch_obs_images, goal_img=batch_goal_images, input_goal_mask=no_mask)
-    # obsgoal_cond = obsgoal_cond.flatten(start_dim=1)  
     obsgoal_cond = obsgoal_cond.repeat_interleave(num_samples, dim=0)
 
     # initialize action from Gaussian noise
@@ -2229,7 +1832,7 @@ def model_output(
         'gc_distance': gc_distance,
     }
 
-def supervision_from_diffusion_action_distribution(
+def supervision_from_nomad(
     ema_model: nn.Module,
     noise_scheduler: DDPMScheduler,
     batch_obs_images: torch.Tensor,
@@ -2261,10 +1864,8 @@ def supervision_from_diffusion_action_distribution(
     batch_obs_images_list = torch.split(batch_obs_images, max_batch_size, dim=0)
     batch_goal_images_list = torch.split(batch_goal_images, max_batch_size, dim=0)
 
-    #uc_actions_list = []
     gc_actions_torch_list = []    
     gc_actions_list = []
-    #gc_distances_list = []
 
     for obs, goal in zip(batch_obs_images_list, batch_goal_images_list):
         model_output_dict = model_output(
@@ -2278,87 +1879,21 @@ def supervision_from_diffusion_action_distribution(
             device,
         )
         gc_actions_torch_list.append(model_output_dict['gc_actions'])        
-        #gc_actions_list.append(to_numpy(model_output_dict['gc_actions']))
-
     gc_actions_torch_list = torch.concat(gc_actions_torch_list, axis=0)    
-    #gc_actions_list = np.concatenate(gc_actions_list, axis=0)
-
     gc_actions_torch_list = torch.split(gc_actions_torch_list, num_samples, dim=0)    
-    #gc_actions_list = np.split(gc_actions_list, num_images_log, axis=0)
     
     select_traj_list = []
     for i in range(num_images_log):
-        #gc_actions = gc_actions_list[i]
         gc_actions_torch = gc_actions_torch_list[i]
-        #print("gc_actions_torch", gc_actions_torch.size())
         gc_actions_torch_cat = torch.concat(torch.split(gc_actions_torch, 1, dim=1), axis=0).squeeze(1)  
-        #print("gc_actions_torch_cat", gc_actions_torch_cat.size())
         
-        batch_goal_pos_i = torch.tensor([batch_goal_pos[i][1], -batch_goal_pos[i][0]])
-        #print(batch_goal_pos_i.size())        
+        batch_goal_pos_i = torch.tensor([batch_goal_pos[i][1], -batch_goal_pos[i][0]])    
         device = gc_actions_torch_cat.get_device()
         
         batch_goal_pos_repeat = batch_goal_pos_i.unsqueeze(0).repeat(num_samples*8, 1).to(device)
-        #print(batch_goal_pos_repeat)
-        #batch_goal_pos_repeat = batch_goal_pos[i].unsqueeze(0).repeat(num_samples*8, 1)    
-        #print(batch_goal_pos_repeat)                   
-        #print("after", batch_goal_pos_repeat_i)
-        #print("before", batch_goal_pos_repeat) 
-        #print(batch_goal_pos_repeat.size(), gc_actions_torch_cat.size())
         traj_id_all = torch.argmin(torch.sum((batch_goal_pos_repeat - gc_actions_torch_cat)**2, axis=1))
         traj_id = traj_id_all % num_samples
-        #print(traj_id, traj_id_all)
-
         select_traj_list.append(gc_actions_torch[traj_id:traj_id+1])
-        """
-        fig, ax = plt.subplots(1, 3)
-        traj_list = np.concatenate([
-            gc_actions_torch[traj_id:traj_id+1].cpu().numpy(),        
-            gc_actions_torch.cpu().numpy(),
-            #action_label[None],
-        ], axis=0)
-
-        traj_colors = ["red"] * 1 + ["green"] * len(gc_actions_torch)
-        traj_alphas = [1.0] * 1 + [0.1] * len(gc_actions_torch)
-                
-        # make points numpy array of robot positions (0, 0) and goal positions
-        point_list = [np.array([0, 0]), to_numpy(batch_goal_pos_i)]
-        point_colors = ["green", "orange"]
-        point_alphas = [1.0, 1.0]
-
-        plot_trajs_and_points_noriaki(
-            ax[0],
-            traj_list,
-            point_list,
-            traj_colors,
-            point_colors,
-            traj_labels=None,
-            point_labels=None,
-            quiver_freq=0,
-            traj_alphas=traj_alphas,
-            point_alphas=point_alphas, 
-        )
-        
-        obs_image = to_numpy(batch_viz_obs_images[i])
-        goal_image = to_numpy(batch_viz_goal_images[i])
-        # move channel to last dimension
-        obs_image = np.moveaxis(obs_image, 0, -1)
-        goal_image = np.moveaxis(goal_image, 0, -1)
-        #print("obs_image", obs_image.max(), obs_image.min())
-        #print("goal_image", goal_image.max(), goal_image.min())        
-        ax[1].imshow(obs_image)
-        ax[2].imshow(goal_image)
-
-        # set title
-        ax[0].set_title(f"diffusion action predictions")
-        ax[1].set_title(f"observation")
-        
-        # make the plot large
-        fig.set_size_inches(18.5, 10.5)
-
-        plt.savefig("sample_" + str(it_num) + "_" + str(i) + ".png")        
-        plt.close(fig)
-        """
     return torch.concat(select_traj_list, axis=0)
 
 def visualize_diffusion_action_distribution(
@@ -2527,20 +2062,10 @@ def visualize_lelan_estimation(
     if not os.path.isdir(visualize_path):
         os.makedirs(visualize_path)
 
-    #max_batch_size = batch_obs_images.shape[0]
-
-    num_images_log = min(num_images_log, batch_viz_obs_images.shape[0], batch_viz_goal_images.shape[0], obj_poses.shape[0], last_poses.shape[0])
-    #batch_obs_images = batch_viz_obs_images[:num_images_log]
-    #batch_goal_images = batch_viz_goal_images[:num_images_log]
-    #batch_action_label = obj_poses[:num_images_log]
-    #batch_goal_pos = last_poses[:num_images_log]
-    
+    num_images_log = min(num_images_log, batch_viz_obs_images.shape[0], batch_viz_goal_images.shape[0], obj_poses.shape[0], last_poses.shape[0])    
     batch_linear_vel = linear_vel[:num_images_log]
     batch_angular_vel = angular_vel[:num_images_log]
     
-    #print("testtest", linear_vel.max(), linear_vel.min(), angular_vel.max(), angular_vel.min())
-    
-    #batch_px_list, batch_pz_list = robot_pos_model_vis(batch_linear_vel, batch_angular_vel)
     px_list, pz_list, ry_list = robot_pos_model_fix(batch_linear_vel, batch_angular_vel)
     
     px_list_a = []
@@ -2548,62 +2073,13 @@ def visualize_lelan_estimation(
     for px_v in px_list:
         px_list_a.append(px_v.unsqueeze(1))
     for pz_v in pz_list:
-        pz_list_a.append(pz_v.unsqueeze(1))
-            
+        pz_list_a.append(pz_v.unsqueeze(1))        
     batch_px_list = torch.cat(px_list_a, axis=1)
     batch_pz_list = torch.cat(pz_list_a, axis=1)
     
-    
-    #batch_px_last, batch_pz_last, _ = robot_pos_model(batch_linear_vel, batch_angular_vel)
-    #batch_px_last, batch_pz_last, _ = robot_pos_model(batch_linear_vel, batch_angular_vel)
-    
     wandb_list = []
 
-    #pred_horizon = batch_action_label.shape[1]
-    #action_dim = batch_action_label.shape[2]
-
-    # split into batches
-    #batch_obs_images_list = torch.split(batch_obs_images, max_batch_size, dim=0)
-    #batch_goal_images_list = torch.split(batch_goal_images, max_batch_size, dim=0)
-    """
-    uc_actions_list = []
-    gc_actions_list = []
-    gc_distances_list = []
-
-    for obs, goal in zip(batch_obs_images_list, batch_goal_images_list):
-        model_output_dict = model_output(
-            ema_model,
-            noise_scheduler,
-            obs,
-            goal,
-            pred_horizon,
-            action_dim,
-            num_samples,
-            device,
-        )
-        uc_actions_list.append(to_numpy(model_output_dict['uc_actions']))
-        gc_actions_list.append(to_numpy(model_output_dict['gc_actions']))
-        gc_distances_list.append(to_numpy(model_output_dict['gc_distance']))
-
-    # concatenate
-    uc_actions_list = np.concatenate(uc_actions_list, axis=0)
-    gc_actions_list = np.concatenate(gc_actions_list, axis=0)
-    gc_distances_list = np.concatenate(gc_distances_list, axis=0)
-
-    # split into actions per observation
-    uc_actions_list = np.split(uc_actions_list, num_images_log, axis=0)
-    gc_actions_list = np.split(gc_actions_list, num_images_log, axis=0)
-    gc_distances_list = np.split(gc_distances_list, num_images_log, axis=0)
-
-    gc_distances_avg = [np.mean(dist) for dist in gc_distances_list]
-    gc_distances_std = [np.std(dist) for dist in gc_distances_list]
-
-    assert len(uc_actions_list) == len(gc_actions_list) == num_images_log
-
-    np_distance_labels = to_numpy(batch_distance_labels)
-    """
     for i in range(num_images_log):
-        #fig, ax = plt.subplots(1, 3)
         fig = plt.figure(figsize=(34, 16), dpi=80)
         gs = fig.add_gridspec(2,3)
         ax_graph = fig.add_subplot(gs[0:2, 0:1])
@@ -2613,8 +2089,6 @@ def visualize_lelan_estimation(
                     
         x_seq = to_numpy(batch_px_list[i])
         z_seq = to_numpy(batch_pz_list[i])
-        #x_last = to_numpy(batch_px_last[i])
-        #z_last = to_numpy(batch_pz_last[i])
                 
         xgt = to_numpy(obj_poses[i,0])
         ygt = to_numpy(obj_poses[i,1])
@@ -2625,11 +2099,9 @@ def visualize_lelan_estimation(
         ax_graph.plot(x_seq, z_seq, marker = 'o', color='blue')
         ax_graph.plot(xgt, ygt, marker = '*', color='red')
         ax_graph.plot(xest, yest, marker = '+', color='green')
-        #ax[0].plot(x_last, z_last, marker = 's', color='black')
                 
         obs_image = to_numpy(batch_viz_obs_images[i])
         prompt = obj_inst[i]
-        #print(batch_viz_obs_images[i].max(), batch_viz_obs_images[i].min(), batch_viz_obs_images[i].type())
         goal_image = to_numpy(batch_viz_goal_images[i])
         # move channel to last dimension
         obs_image = np.moveaxis(obs_image, 0, -1)
@@ -2643,7 +2115,6 @@ def visualize_lelan_estimation(
         ax_graph.set_title(f"est. trajectory")
         ax_ob.set_title(f"observation")
         ax_goal.set_title(f"cropped goal image")
-        #ax[2].set_title(f"goal: label={np_distance_labels[i]} gc_dist={gc_distances_avg[i]:.2f}±{gc_distances_std[i]:.2f}")
         
         # make the plot large
         fig.set_size_inches(18.5, 10.5)
@@ -2653,48 +2124,5 @@ def visualize_lelan_estimation(
         wandb_list.append(wandb.Image(save_path))
         plt.close(fig)
             
-        """
-        fig, ax = plt.subplots(1, 3)
-
-        x_seq = to_numpy(batch_px_list[i])
-        z_seq = to_numpy(batch_pz_list[i])
-        #x_last = to_numpy(batch_px_last[i])
-        #z_last = to_numpy(batch_pz_last[i])
-                
-        xgt = to_numpy(obj_poses[i,0])
-        ygt = to_numpy(obj_poses[i,1])
-
-        xest = to_numpy(last_poses[i,0])
-        yest = to_numpy(last_poses[i,1])
-        
-        ax[0].plot(x_seq, z_seq, marker = 'o', color='blue')
-        ax[0].plot(xgt, ygt, marker = '*', color='red')
-        ax[0].plot(xest, yest, marker = '+', color='green')
-        #ax[0].plot(x_last, z_last, marker = 's', color='black')
-                
-        obs_image = to_numpy(batch_viz_obs_images[i])
-        #print(batch_viz_obs_images[i].max(), batch_viz_obs_images[i].min(), batch_viz_obs_images[i].type())
-        goal_image = to_numpy(batch_viz_goal_images[i])
-        # move channel to last dimension
-        obs_image = np.moveaxis(obs_image, 0, -1)
-        goal_image = np.moveaxis(goal_image, 0, -1)
-        ax[1].imshow(obs_image)
-        ax[2].imshow(goal_image)
-
-        # set title
-        ax[0].set_title(f"est. trajectory")
-        ax[1].set_title(f"observation")
-        ax[2].set_title(f"cropped goal image")
-        #ax[2].set_title(f"goal: label={np_distance_labels[i]} gc_dist={gc_distances_avg[i]:.2f}±{gc_distances_std[i]:.2f}")
-        
-        # make the plot large
-        fig.set_size_inches(18.5, 10.5)
-
-        save_path = os.path.join(visualize_path, f"sample_{i}.png")
-        plt.savefig(save_path)
-        wandb_list.append(wandb.Image(save_path))
-        plt.close(fig)
-        """
     if len(wandb_list) > 0 and use_wandb:
-        wandb.log({f"{eval_type}_action_samples": wandb_list}, commit=False)
-        
+        wandb.log({f"{eval_type}_action_samples": wandb_list}, commit=False)       

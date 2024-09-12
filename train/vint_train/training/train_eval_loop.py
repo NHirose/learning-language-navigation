@@ -289,11 +289,9 @@ def train_eval_loop_lelan(
     model: nn.Module,
     optimizer: Adam, 
     lr_scheduler: torch.optim.lr_scheduler._LRScheduler,
-    #noise_scheduler: DDPMScheduler,
     train_loader: DataLoader,
     test_dataloaders: Dict[str, DataLoader],
     transform: transforms,
-    #goal_mask_prob: float,
     epochs: int,
     device: torch.device,
     project_folder: str,
@@ -302,36 +300,34 @@ def train_eval_loop_lelan(
     image_log_freq: int = 1000,
     num_images_log: int = 8,
     current_epoch: int = 0,
-    alpha: float = 1e-4,
     use_wandb: bool = True,
     eval_fraction: float = 0.25,
     eval_freq: int = 1,
     save_freq: int = 1,
 ):
     """
-    Train and evaluate the model for several epochs (vint or gnm models)
+    Train and evaluate the model for several epochs (LeLaN without collision avoidance loss using NoMaD supervision)
 
     Args:
+        train_model: True or False for training    
         model: model to train
         optimizer: optimizer to use
         lr_scheduler: learning rate scheduler to use
-        noise_scheduler: noise scheduler to use
-        dataloader: dataloader for train dataset
+        train_loader: dataloader for train dataset
         test_dataloaders: dict of dataloaders for testing
         transform: transform to apply to images
-        goal_mask_prob: probability of masking the goal token during training
         epochs: number of epochs to train
         device: device to train on
         project_folder: folder to save checkpoints and logs
+        print_log_freq: frequency of printing to console        
         wandb_log_freq: frequency of logging to wandb
-        print_log_freq: frequency of printing to console
         image_log_freq: frequency of logging images to wandb
         num_images_log: number of images to log to wandb
         current_epoch: epoch to start training from
-        alpha: tradeoff between distance and action loss
         use_wandb: whether to log to wandb or not
         eval_fraction: fraction of training data to use for evaluation
         eval_freq: frequency of evaluation
+        save_freq: frequency of saving model            
     """
     latest_path = os.path.join(project_folder, f"latest.pth")
     ema_model = EMAModel(model=model,power=0.75) #[TODO] for diffusion model
@@ -348,8 +344,6 @@ def train_eval_loop_lelan(
                 dataloader=train_loader,
                 transform=transform,
                 device=device,
-                #noise_scheduler=noise_scheduler,
-                #goal_mask_prob=goal_mask_prob,
                 project_folder=project_folder,
                 epoch=epoch,
                 print_log_freq=print_log_freq,
@@ -357,16 +351,10 @@ def train_eval_loop_lelan(
                 image_log_freq=image_log_freq,
                 num_images_log=num_images_log,
                 use_wandb=use_wandb,
-                alpha=alpha,
             )
             lr_scheduler.step()
 
         if epoch % save_freq == 0:
-            #numbered_path = os.path.join(project_folder, f"ema_{epoch}.pth")
-            #torch.save(ema_model.averaged_model.state_dict(), numbered_path)
-            #numbered_path = os.path.join(project_folder, f"ema_latest.pth")
-            #print(f"Saved EMA model to {numbered_path}")
-
             numbered_path = os.path.join(project_folder, f"{epoch}.pth")
             torch.save(model.state_dict(), numbered_path)
             torch.save(model.state_dict(), latest_path)
@@ -390,13 +378,10 @@ def train_eval_loop_lelan(
                 loader = test_dataloaders[dataset_type]
                 evaluate_lelan(
                     eval_type=dataset_type,
-                    #ema_model=ema_model,
                     ema_model=model,
                     dataloader=loader,
                     transform=transform,
                     device=device,
-                    #noise_scheduler=noise_scheduler,
-                    #goal_mask_prob=goal_mask_prob,
                     project_folder=project_folder,
                     epoch=epoch,
                     print_log_freq=print_log_freq,
@@ -433,7 +418,6 @@ def train_eval_loop_lelan_col(
     train_loader: DataLoader,
     test_dataloaders: Dict[str, DataLoader],
     transform: transforms,
-    #goal_mask_prob: float,
     epochs: int,
     device: torch.device,
     project_folder: str,
@@ -443,36 +427,37 @@ def train_eval_loop_lelan_col(
     image_log_freq: int = 1000,
     num_images_log: int = 8,
     current_epoch: int = 0,
-    alpha: float = 1e-4,
     use_wandb: bool = True,
     eval_fraction: float = 0.25,
     eval_freq: int = 1,
     save_freq: int = 1,
 ):
     """
-    Train and evaluate the model for several epochs (vint or gnm models)
+    Train and evaluate the model for several epochs (LeLaN without collision avoidance loss using NoMaD supervision)
 
     Args:
+        train_model: True or False for training
         model: model to train
+        model_nomad: model for NoMaD supervision
         optimizer: optimizer to use
         lr_scheduler: learning rate scheduler to use
         noise_scheduler: noise scheduler to use
-        dataloader: dataloader for train dataset
+        train_loader: dataloader for train dataset
         test_dataloaders: dict of dataloaders for testing
         transform: transform to apply to images
-        goal_mask_prob: probability of masking the goal token during training
         epochs: number of epochs to train
         device: device to train on
         project_folder: folder to save checkpoints and logs
+        weight_col_loss: weight for collision avoidance loss using NoMaD supervisions
+        print_log_freq: frequency of printing to console        
         wandb_log_freq: frequency of logging to wandb
-        print_log_freq: frequency of printing to console
         image_log_freq: frequency of logging images to wandb
         num_images_log: number of images to log to wandb
         current_epoch: epoch to start training from
-        alpha: tradeoff between distance and action loss
         use_wandb: whether to log to wandb or not
         eval_fraction: fraction of training data to use for evaluation
         eval_freq: frequency of evaluation
+        save_freq: frequency of saving model        
     """
     latest_path = os.path.join(project_folder, f"latest.pth")
     ema_model = EMAModel(model=model,power=0.75) #[TODO] for diffusion model
@@ -492,7 +477,6 @@ def train_eval_loop_lelan_col(
                 transform=transform,
                 device=device,
                 noise_scheduler=noise_scheduler,
-                #goal_mask_prob=goal_mask_prob,
                 project_folder=project_folder,
                 weight_col_loss=weight_col_loss,
                 epoch=epoch,
@@ -501,16 +485,10 @@ def train_eval_loop_lelan_col(
                 image_log_freq=image_log_freq,
                 num_images_log=num_images_log,
                 use_wandb=use_wandb,
-                alpha=alpha,
             )
             lr_scheduler.step()
 
         if epoch % save_freq == 0:
-            #numbered_path = os.path.join(project_folder, f"ema_{epoch}.pth")
-            #torch.save(ema_model.averaged_model.state_dict(), numbered_path)
-            #numbered_path = os.path.join(project_folder, f"ema_latest.pth")
-            #print(f"Saved EMA model to {numbered_path}")
-
             numbered_path = os.path.join(project_folder, f"{epoch}.pth")
             torch.save(model.state_dict(), numbered_path)
             torch.save(model.state_dict(), latest_path)
@@ -534,14 +512,12 @@ def train_eval_loop_lelan_col(
                 loader = test_dataloaders[dataset_type]
                 evaluate_lelan_col(
                     eval_type=dataset_type,
-                    #ema_model=ema_model,
                     ema_model=model,
                     ema_model_nomad=ema_model_nomad,                    
                     dataloader=loader,
                     transform=transform,
                     device=device,
                     noise_scheduler=noise_scheduler,
-                    #goal_mask_prob=goal_mask_prob,
                     project_folder=project_folder,
                     weight_col_loss=weight_col_loss,                    
                     epoch=epoch,
