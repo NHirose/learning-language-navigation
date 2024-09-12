@@ -23,38 +23,23 @@ seed: 0
 
 # model params
 model_type: lelan #lnp_freeze_clip
-vision_encoder: lelan_clip_film #lnp_clip_film
+vision_encoder: lelan_clip_film
 encoding_size: 256
 obs_encoder: efficientnet-b0
 clip_type: "ViT-B/32"
-#attn_unet: False
 cond_predict_scale: False
 mha_num_attention_heads: 4
 mha_num_attention_layers: 4
 mha_ff_dim_factor: 4
 down_dims: [64, 128, 256]
 
-# diffusion model params
-#num_diffusion_iters: 10
-
-# mask 
-#goal_mask_prob: 0.5
-
 # normalization for the action space
 normalize: True
 
 # context
 context_type: temporal
-context_size: 0 # 5
+context_size: 0 # 1
 alpha: 1e-4
-
-# distance bounds for distance and action and distance predictions 
-#distance:
-#  min_dist_cat: 0
-#  max_dist_cat: 20
-#action:
-#  min_dist_cat: 3
-#  max_dist_cat: 20
 
 # action output params
 len_traj_pred: 24
@@ -66,92 +51,51 @@ feature_size: 4096
 
 datasets:  
   go_stanford4:
-    #data_folder: /home/noriaki/visualnav-transformer_combine/gnm_dataset/go_stanford/ # datasets/stanford_go_new
     train: ../dataset/lelan_gs4/train/
     test: ../dataset/lelan_gs4/test/
     image: ../dataset/dataset_LeLaN_gs4/image/
     pickle: ../dataset/dataset_LeLaN_gs4/pickle/
-    #odom: /media/noriaki/Noriaki_Data/data_GS/dataset_odom.txt
-    #end_slack: 0
-    #goals_per_obs: 2 # increase dataset size
-    #negative_mining: True
     backside: False
     aug_seq: False
     only_front: False
-    #imsize: 580
-    #height: 580
-    #width: 1160
             
   sacson:
-    #data_folder: /home/noriaki/visualnav-transformer_combine/gnm_dataset/sacson/ # datasets/stanford_go_new
     train: ../dataset/lelan_sacson/train/
     test: ../dataset/lelan_sacson/test/
     image: ../dataset/dataset_LeLaN_sacson/
     pickle: ../dataset/dataset_LeLaN_sacson/
-    #odom: /media/noriaki/Noriaki_Data/data_GS/dataset_odom.txt
-    #end_slack: 0
-    #goals_per_obs: 2 # increase dataset size
-    #negative_mining: True
     backside: False
     aug_seq: False
     only_front: False
-    #imsize: 580
-    #height: 580
-    #width: 1160
             
   go_stanford2:
-    #data_folder: /home/noriaki/visualnav-transformer_combine/gnm_dataset/sacson/ # datasets/stanford_go_new
     train: ../dataset/lelan_gs2/train/
     test: ../dataset/lelan_gs2/test/
     image: ../dataset/dataset_LeLaN_gs2/
     pickle: ../dataset/dataset_LeLaN_gs2/
-    #odom: /media/noriaki/Noriaki_Data/data_GS/dataset_odom.txt
-    #end_slack: 0
-    #goals_per_obs: 2 # increase dataset size
-    #negative_mining: True
     backside: False
     aug_seq: False
     only_front: False
-    #imsize: 580
-    #height: 580
-    #width: 1160
 
   humanw:
-    #data_folder: /home/noriaki/visualnav-transformer_combine/gnm_dataset/sacson/ # datasets/stanford_go_new   
     train: ../dataset/lelan_humanw/train/
     test: ../dataset/lelan_humanw/test/
     image: ../dataset/dataset_LeLaN_humanwalk/
     pickle: ../dataset/dataset_LeLaN_humanwalk/    
-    #odom: /media/noriaki/Noriaki_Data/data_GS/dataset_odom.txt
-    #end_slack: 0
-    #goals_per_obs: 2 # increase dataset size
-    #negative_mining: True
     backside: False
     aug_seq: False 
     only_front: True   
-    #imsize: 580
-    #height: 580
-    #width: 580
 
   youtube:
-    #data_folder: /home/noriaki/visualnav-transformer_combine/gnm_dataset/sacson/ # datasets/stanford_go_new
     train: ../dataset/lelan_youtube/train/
     test: ../dataset/lelan_youtube/test/
     image: ../dataset/dataset_LeLaN_youtube/
     pickle: ../dataset/dataset_LeLaN_youtube/        
-    #odom: /media/noriaki/Noriaki_Data/data_GS/dataset_odom.txt
-    #end_slack: 0
-    #goals_per_obs: 2 # increase dataset size
-    #negative_mining: True
     backside: False
     aug_seq: False 
     only_front: True  
-    #imsize: 1280
-    #height: 720
-    #width: 1280
         
 # logging stuff
-## =0 turns off
 print_log_freq: 1000 # in iterations
 image_log_freq: 40 #0 # in iterations 1000 40
 num_images_log: 8 #0 
@@ -161,5 +105,4 @@ wandb_log_freq: 10 # in iterations
 eval_freq: 1 # in epochs 20
 save_freq: 3 # in epochs
 
-#load_run: xxxxxx
-
+#load_run: lelan-release/xxxxxxxx #xxxxxxxx is the folder of the pretrained checkpoint

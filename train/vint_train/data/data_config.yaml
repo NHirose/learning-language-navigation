@@ -58,7 +58,7 @@ carla:
   image_path_func: get_image_path
 
 sacson:
-  metric_waypoint_spacing: 0.255
+  metric_waypoint_spacing: 0.12
 
 go_stanford4:
   metric_waypoint_spacing: 0.12
@@ -67,9 +67,9 @@ go_stanford2:
   metric_waypoint_spacing: 0.12
 
 humanw:
-  metric_waypoint_spacing: 0.255
+  metric_waypoint_spacing: 0.12
 
 youtube:
-  metric_waypoint_spacing: 0.255
+  metric_waypoint_spacing: 0.12
 
 # add your own dataset params here:

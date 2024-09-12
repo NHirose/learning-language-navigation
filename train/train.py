@@ -28,8 +28,8 @@ from vint_train.models.nomad.nomad import NoMaD, DenseNetwork
 from vint_train.models.nomad.nomad_vint import NoMaD_ViNT, replace_bn_with_gn
 from diffusion_policy.model.diffusion.conditional_unet1d import ConditionalUnet1D
 
-from vint_train.models.lelan.lelan import LNP, LNP_clip, LNP_clip_freeze, LNP_clip2, DenseNetwork_lnp
-from vint_train.models.lelan.lelan_comp import LNP_comp, LNP_clip_comp, LNP_clip_FiLM
+from vint_train.models.lelan.lelan import LeLaN_clip, LeLaN_clip_temp, DenseNetwork_lelan
+from vint_train.models.lelan.lelan_comp import LeLaN_clip_FiLM, LeLaN_clip_FiLM_temp
 
 from vint_train.data.vint_dataset import ViNT_Dataset
 from vint_train.data.lelan_dataset import LeLaN_Dataset
@@ -38,6 +38,7 @@ from vint_train.training.train_eval_loop import (
     train_eval_loop,
     train_eval_loop_nomad,
     train_eval_loop_lelan,
+    train_eval_loop_lelan_col,
     load_model,
 )
 
@@ -100,27 +101,17 @@ def main(config):
             if data_split_type in data_config:
                 if config["project_name"] == "lelan-release":                  
                     dataset = LeLaN_Dataset(
-                        #data_folder=data_config["data_folder"],
                         data_split_folder=data_config[data_split_type],
                         dataset_name=dataset_name,
                         image_size=config["image_size"],
-                        #waypoint_spacing=data_config["waypoint_spacing"],
-                        #min_dist_cat=config["distance"]["min_dist_cat"],
-                        #max_dist_cat=config["distance"]["max_dist_cat"],
-                        #min_action_distance=config["action"]["min_dist_cat"],
-                        #max_action_distance=config["action"]["max_dist_cat"],
-                        #negative_mining=data_config["negative_mining"],
+                        waypoint_spacing=data_config["waypoint_spacing"],
                         len_traj_pred=config["len_traj_pred"],
                         learn_angle=config["learn_angle"],
                         context_size=config["context_size"],
                         data_split_type = data_split_type,
                         data_image_folder = data_config["image"],
-                        data_pickle_folder = data_config["pickle"],              
-                        #odom_text=data_config["odom"],      
-                        #imsize=data_config["imsize"],                                   
+                        data_pickle_folder = data_config["pickle"],                                             
                         context_type=config["context_type"],
-                        #end_slack=data_config["end_slack"],
-                        #goals_per_obs=data_config["goals_per_obs"],
                         normalize=config["normalize"],
                         goal_type=config["goal_type"],
                         backside=data_config["backside"],
@@ -255,7 +246,7 @@ def main(config):
         )
     elif config["model_type"] == "lelan":
         if config["vision_encoder"] == "lelan_clip_film":
-            vision_encoder = LNP_clip_FiLM(
+            vision_encoder = LeLaN_clip_FiLM(
                 obs_encoding_size=config["encoding_size"],
                 context_size=config["context_size"],
                 mha_num_attention_heads=config["mha_num_attention_heads"],
@@ -271,30 +262,70 @@ def main(config):
         else: 
             raise ValueError(f"Vision encoder {config['vision_encoder']} not supported")
             
-        #noise_pred_net = ConditionalUnet1D(
-        #        input_dim=2,
-        #        global_cond_dim=config["encoding_size"],
-        #        down_dims=config["down_dims"],
-        #        cond_predict_scale=config["cond_predict_scale"],
-        #    )
-        dist_pred_network = DenseNetwork_lnp(embedding_dim=config["encoding_size"], control_horizon=config["len_traj_pred"])
+        dist_pred_network = DenseNetwork_lelan(embedding_dim=config["encoding_size"], control_horizon=config["len_traj_pred"])
                   
         if config["vision_encoder"] == "lelan_clip_film":
-            model = LNP_clip(
+            model = LeLaN_clip(
                 vision_encoder=vision_encoder,
-                #noise_pred_net=noise_pred_net,
                 dist_pred_net=dist_pred_network,
                 text_encoder=text_encoder
             )                
+          
+    elif config["model_type"] == "lelan_col":
+        if config["vision_encoder"] == "lelan_clip_film":
+            vision_encoder = LeLaN_clip_FiLM_temp(
+                obs_encoding_size=config["encoding_size"],
+                context_size=config["context_size"],
+                mha_num_attention_heads=config["mha_num_attention_heads"],
+                mha_num_attention_layers=config["mha_num_attention_layers"],
+                mha_ff_dim_factor=config["mha_ff_dim_factor"],
+                feature_size=config["feature_size"],
+                clip_type=config["clip_type"],
+            )
+            vision_encoder = replace_bn_with_gn(vision_encoder)    
+            text_encoder, preprocess = clip.load(config["clip_type"])    
+            text_encoder.to(torch.float32)  
+            
+            vision_encoder_nomad = NoMaD_ViNT(
+                obs_encoding_size=config["encoding_size"],
+                context_size=config["context_size"],
+                mha_num_attention_heads=config["mha_num_attention_heads"],
+                mha_num_attention_layers=config["mha_num_attention_layers"],
+                mha_ff_dim_factor=config["mha_ff_dim_factor"],
+            )
+            vision_encoder_nomad = replace_bn_with_gn(vision_encoder_nomad)
+
+            noise_pred_net_nomad = ConditionalUnet1D(
+                    input_dim=2,
+                    global_cond_dim=config["encoding_size"],
+                    down_dims=config["down_dims"],
+                    cond_predict_scale=config["cond_predict_scale"],
+                )
+            dist_pred_network_nomad = DenseNetwork(embedding_dim=config["encoding_size"])
+            dist_pred_network = DenseNetwork_lelan(embedding_dim=config["encoding_size"], control_horizon=config["len_traj_pred"])
+            
+        else: 
+            raise ValueError(f"Vision encoder {config['vision_encoder']} not supported")
+
+        model = LeLaN_clip_temp(
+            vision_encoder=vision_encoder,
+            dist_pred_net=dist_pred_network,            
+            text_encoder=text_encoder,
+        )
         
-        #noise_scheduler = DDPMScheduler(
-        #    num_train_timesteps=config["num_diffusion_iters"],
-        #    beta_schedule='squaredcos_cap_v2',
-        #    clip_sample=True,
-        #    prediction_type='epsilon'
-        #)           
-                    
-        
+        model_nomad = NoMaD(
+            vision_encoder=vision_encoder_nomad,
+            noise_pred_net=noise_pred_net_nomad,
+            dist_pred_net=dist_pred_network_nomad,
+        )
+
+        noise_scheduler = DDPMScheduler(
+            num_train_timesteps=config["num_diffusion_iters"],
+            beta_schedule='squaredcos_cap_v2',
+            clip_sample=True,
+            prediction_type='epsilon'
+        )
+                        
     else:
         raise ValueError(f"Model {config['model']} not supported")
 
@@ -367,6 +398,14 @@ def main(config):
         if "epoch" in latest_checkpoint:
             current_epoch = latest_checkpoint["epoch"] + 1
 
+    if "load_nomad" in config:
+        load_project_folder = os.path.join("logs", config["load_nomad"])
+        print("Loading NoMaD model from ", load_project_folder)
+        latest_path = os.path.join(load_project_folder, "latest.pth")
+        latest_checkpoint = torch.load(latest_path) #f"cuda:{}" if torch.cuda.is_available() else "cpu")
+        load_model(model_nomad, config["model_type"], latest_checkpoint)
+        model_nomad.to(device)
+
     # Multi-GPU
     if len(config["gpu_ids"]) > 1:
         model = nn.DataParallel(model, device_ids=config["gpu_ids"])
@@ -406,11 +445,9 @@ def main(config):
             model=model,
             optimizer=optimizer,
             lr_scheduler=scheduler,
-            #noise_scheduler=noise_scheduler,
             train_loader=train_loader,
             test_dataloaders=test_dataloaders,
             transform=transform,
-            #goal_mask_prob=config["goal_mask_prob"],
             epochs=config["epochs"],
             device=device,
             project_folder=config["project_folder"],
@@ -424,7 +461,33 @@ def main(config):
             eval_fraction=config["eval_fraction"],
             eval_freq=config["eval_freq"],
             save_freq=config["save_freq"],
-        )            
+        )    
+    elif config["model_type"] == "lelan_col":
+        train_eval_loop_lelan_col(
+            train_model=config["train"],
+            model=model,
+            model_nomad=model_nomad,            
+            optimizer=optimizer,
+            lr_scheduler=scheduler,
+            noise_scheduler=noise_scheduler,
+            train_loader=train_loader,
+            test_dataloaders=test_dataloaders,
+            transform=transform,
+            epochs=config["epochs"],
+            device=device,
+            project_folder=config["project_folder"],
+            weight_col_loss=config["weight_col_loss"],            
+            print_log_freq=config["print_log_freq"],
+            wandb_log_freq=config["wandb_log_freq"],
+            image_log_freq=config["image_log_freq"],
+            num_images_log=config["num_images_log"],
+            current_epoch=current_epoch,
+            alpha=float(config["alpha"]),
+            use_wandb=config["use_wandb"],
+            eval_fraction=config["eval_fraction"],
+            eval_freq=config["eval_freq"],
+            save_freq=config["save_freq"],
+        )                   
     else:
         train_eval_loop_nomad(
             train_model=config["train"],

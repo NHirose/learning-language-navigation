@@ -29,7 +29,7 @@ class LeLaN_Dataset(Dataset):
         data_split_folder: str,
         dataset_name: str,
         image_size: Tuple[int, int],
-        #waypoint_spacing: int,
+        waypoint_spacing: int,
         #min_dist_cat: int,
         #max_dist_cat: int,
         #min_action_distance: int,
@@ -82,7 +82,7 @@ class LeLaN_Dataset(Dataset):
         
         self.image_size = image_size
         self.image_size_clip = (224, 224)
-        #self.waypoint_spacing = waypoint_spacing
+        self.waypoint_spacing = waypoint_spacing
         #self.distance_categories = list(
         #    range(min_dist_cat, max_dist_cat + 1, self.waypoint_spacing)
         #)
@@ -733,14 +733,27 @@ class LeLaN_Dataset(Dataset):
             #else:
             #    image_fullsize = self._load_image_front(self.image_path[iv])
             image_fullsize = self._load_image_front(self.image_path[iv]) #self.image_path[0]
-            #print("after _load_image_front", image_fullsize.max(), image_fullsize.min(), image_fullsize.size(), self.image_size)        
-            pickle_values = self.aug_data_list[iv]
-            #self._vis_dataset(image_fullsize, pickle_values)
             flag_data_inner = 0
             
-            if image_fullsize is None: #to detect Nontype image and skip
-                flag_data_inner = 1
-                iv = random.randint(0, len(self.image_path)-1)
+            context_image = [image_fullsize]        
+            #print("context_size", self.context_size)    
+            for ih in range(self.context_size):
+                if iv-ih > 0:                   
+                    context_image.append(self._load_image_front(self.image_path[iv-ih]))             
+                else:
+                    context_image.append(self._load_image_front(self.image_path[0]))
+            #print("context_image size", len(context_image))
+            
+            for ih in range(self.context_size + 1):
+                if context_image[ih] is None: #to detect Nontype image and skip
+                    flag_data_inner = 1
+                    iv = random.randint(0, len(self.image_path)-1)
+      
+            pickle_values = self.aug_data_list[iv]
+            #self._vis_dataset(image_fullsize, pickle_values)
+            #if image_fullsize is None: #to detect Nontype image and skip
+            #    flag_data_inner = 1
+            #    iv = random.randint(0, len(self.image_path)-1)
                 
             if len(pickle_values) != 0:
                 list_rand = [random.randint(0, len(pickle_values)-1) for i in range(len(pickle_values))]            
@@ -763,7 +776,34 @@ class LeLaN_Dataset(Dataset):
                     #if pickle_values[ir]["bbox"][1] <= 580 and pickle_values[ir]["bbox"][3] <= 580 and pickle_values[ir]["obj_detect"]:         
                     if thres_data:                   
                         #image_crop = image_fullsize[:, pickle_values[ir]["bbox"][0]:pickle_values[ir]["bbox"][1], pickle_values[ir]["bbox"][2]:pickle_values[ir]["bbox"][3]]
-                        image_crop = image_fullsize
+                        #image_crop = image_fullsize
+                        
+                        if 0 <= pickle_values[ir]["bbox"][0] and pickle_values[ir]["bbox"][0] < 224-1:
+                            bbox_top = int(pickle_values[ir]["bbox"][0])
+                        elif pickle_values[ir]["bbox"][0] < 0:
+                            bbox_top = 0                        
+                        else:
+                            bbox_top = 223
+                        if 0 <= pickle_values[ir]["bbox"][1] and pickle_values[ir]["bbox"][1] < 224-1:
+                            bbox_bottom = int(pickle_values[ir]["bbox"][1])
+                        elif pickle_values[ir]["bbox"][1] < 0:
+                            bbox_bottom = 0                        
+                        else:
+                            bbox_bottom = 223
+                        if 0 <= pickle_values[ir]["bbox"][2] and pickle_values[ir]["bbox"][2] < 224-1:
+                            bbox_left = int(pickle_values[ir]["bbox"][2])
+                        elif pickle_values[ir]["bbox"][2] < 0:
+                            bbox_left = 0                        
+                        else:
+                            bbox_left = 223
+                        if 0 <= pickle_values[ir]["bbox"][3] and pickle_values[ir]["bbox"][3] < 224-1:
+                            bbox_right = int(pickle_values[ir]["bbox"][3])
+                        elif pickle_values[ir]["bbox"][3] < 0:
+                            bbox_right = 0                        
+                        else:
+                            bbox_right = 223
+                                                                                
+                        image_crop = image_fullsize[:, bbox_top:bbox_bottom, bbox_left:bbox_right]
                         #pose_obj = pickle_values[ir]["pose_median"]
                         
                         if flag_back == 0:
@@ -874,6 +914,7 @@ class LeLaN_Dataset(Dataset):
         voffset = int(224.0*self.v_random*random.random())
         hoffset = int(224.0*self.h_random*random.random())
         
+        """
         if self.only_front:
             #print("image_fullsize", image_fullsize.shape)
             image_obs = self._resize_norm(image_fullsize[:, voffset:224-voffset, hoffset:224-hoffset], self.image_size)
@@ -883,7 +924,21 @@ class LeLaN_Dataset(Dataset):
                 image_obs = self._resize_norm(image_fullsize[:, voffset:224-voffset, hoffset:224-hoffset], self.image_size)
             else:
                 image_obs = self._resize_norm(image_fullsize[:, voffset:224-voffset, 224+hoffset:2*224-hoffset], self.image_size)
-                #image_obs = self._resize_norm(image_fullsize[:,:,224:2*224], self.image_size)   
+                #image_obs = self._resize_norm(image_fullsize[:,:,224:2*224], self.image_size)  
+        """ 
+        image_obs_list = [] 
+        if self.only_front:
+            for ih in range(self.context_size + 1):
+                image_obs_list.append(self._resize_norm(context_image[ih][:, voffset:224-voffset, hoffset:224-hoffset], self.image_size))                
+        else:
+            if flag_back == 0:
+                for ih in range(self.context_size + 1):     
+                    image_obs_list.append(self._resize_norm(context_image[ih][:, voffset:224-voffset, hoffset:224-hoffset], self.image_size))              
+            else:
+                for ih in range(self.context_size + 1):  
+                    image_obs_list.append(self._resize_norm(context_image[ih][:, voffset:224-voffset, 224+hoffset:2*224-hoffset], self.image_size))                   
+        image_obs = torch.cat(image_obs_list[::-1])      
+        
         #image_obs = self._resize_norm(image_fullsize[:,:,0:580], self.image_size)
         image_crop = self._resize_norm(image_crop, self.image_size)        
         #print(image_obs.max(), image_obs.min(), image_obs.size(), image_crop.max(), image_crop.min(), image_crop.size(), torch.as_tensor(np.array(pose_obj), dtype=torch.float32))
@@ -902,11 +957,13 @@ class LeLaN_Dataset(Dataset):
         #image_obs_r = image_obs
         #image_crop_r = image_crop
         #ob_pose_r = np.array((pose_obj[0], pose_obj[2]))  
+        ob_pose_norm = ob_pose_r/self.data_config["metric_waypoint_spacing"] * self.waypoint_spacing
         
         return (
             torch.as_tensor(image_obs_r, dtype=torch.float32),
             torch.as_tensor(image_crop_r, dtype=torch.float32),
             torch.as_tensor(ob_pose_r, dtype=torch.float32),
             inst_obj_x,
+            torch.as_tensor(ob_pose_norm, dtype=torch.float32),
             #torch.as_tensor(np.array((pose_obj[0], pose_obj[2])), dtype=torch.float32),
         )         

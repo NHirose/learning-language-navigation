@@ -22,7 +22,7 @@ plateau_factor: 0.5
 seed: 0
 
 # model params
-model_type: lelan #lnp_freeze_clip
+model_type: lelan_col #lelan --> no history of image, #lelan_col --> with history of image  
 vision_encoder: lelan_clip_film #lnp_clip_film
 encoding_size: 256
 obs_encoder: efficientnet-b0
@@ -35,7 +35,7 @@ mha_ff_dim_factor: 4
 down_dims: [64, 128, 256]
 
 # diffusion model params
-#num_diffusion_iters: 10
+num_diffusion_iters: 10
 
 # mask 
 #goal_mask_prob: 0.5
@@ -43,9 +43,11 @@ down_dims: [64, 128, 256]
 # normalization for the action space
 normalize: True
 
+weight_col_loss: 0.0
+
 # context
 context_type: temporal
-context_size: 0 # 5
+context_size: 1 # 5
 alpha: 1e-4
 
 # distance bounds for distance and action and distance predictions 
@@ -93,4 +95,5 @@ wandb_log_freq: 10 # in iterations
 eval_freq: 1 # in epochs 20
 save_freq: 3 # in epochs
 
-load_run: lelan-release/lelan_2024_09_10_14_05_18
+#load_run: lelan-release/lelan_2024_09_10_14_05_18
+load_nomad: nomad/nomad_crop

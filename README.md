@@ -51,31 +51,40 @@ This subfolder contains code for processing datasets and training models from yo
 The codebase assumes access to a workstation running Ubuntu (tested on 18.04 and 20.04), Python 3.7+, and a GPU with CUDA 10+. It also assumes access to conda, but you can modify it to work with other virtual environment packages, or a native setup.
 ### Setup
 Run the commands below inside the `vint_release/` (topmost) directory:
-[TODO] we need to do something for ResNet-film. Now we download their repository and copy and paste the exact model file in our code.
 1. Set up the conda environment:
     ```
-    [TODO]conda env create -f train/train_environment.yml
+    conda env create -f train/train_lelan.yml
     ```
 2. Source the conda environment:
     ```
-    [TODO]conda activate vint_train
+    conda activate lelan
     ```
-3. Install the vint_train packages:
+3. Install the lelan packages:
     ```
-    [TODO]pip install -e train/
+    pip install -e train/
     ```
 4. Install the `diffusion_policy` package from this [repo](https://github.com/real-stanford/diffusion_policy):
     ```
-    [TODO]git clone git@github.com:real-stanford/diffusion_policy.git
-    [TODO]pip install -e diffusion_policy/
+    git clone git@github.com:real-stanford/diffusion_policy.git
+    pip install -e diffusion_policy/
     ```
 
 ### Training LeLaN
+#### without collision avoidance
 Run this inside the `learning-language-navigation/train` directory:
 ```
-python train.py -c <path_of_train_config_file>
+python train.py -c ./config/lelan.yaml
 ```
-The premade config yaml files are in the `train/config` directory. 
+#### with collision avoidance using the NoMaD supervisions
+At first, we need to train the policy without the collision avoidance loss. Then we can finetune it with the collision avoidance loss using the NoMaD supervisions.
+Run this inside the `learning-language-navigation/train` directory for pretraining:
+```
+python train.py -c ./config/lelan_col_pretrain.yaml
+```
+Then, run this for finetuning (Note that you need to edit the folder name to specify the location of the pretrained model in lelan_col.yaml): 
+```
+python train.py -c ./config/lelan_col.yaml
+```
 
 #### Custom Config Files
 `config/lelan.yaml` is the premade yaml files for the LeLaN
