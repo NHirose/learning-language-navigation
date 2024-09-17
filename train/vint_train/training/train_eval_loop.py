@@ -1,11 +1,12 @@
 import wandb
 import os
 import numpy as np
+import copy
 from typing import List, Optional, Dict
 from prettytable import PrettyTable
 
 from vint_train.training.train_utils import train, evaluate
-from vint_train.training.train_utils import train_nomad, evaluate_nomad, train_lelan, evaluate_lelan, train_lelan_col, evaluate_lelan_col
+from vint_train.training.train_utils import train_nomad, evaluate_nomad, train_lelan, evaluate_lelan, train_lelan_col, evaluate_lelan_col, train_lelan_col2, evaluate_lelan_col2
 
 import torch
 import torch.nn as nn
@@ -545,9 +546,149 @@ def train_eval_loop_lelan_col(
     # Flush the last set of eval logs
     wandb.log({})
 
+def train_eval_loop_lelan_col2(
+    train_model: bool,
+    model: nn.Module,
+    model_nomad: nn.Module,    
+    optimizer: Adam, 
+    lr_scheduler: torch.optim.lr_scheduler._LRScheduler,
+    noise_scheduler: DDPMScheduler,
+    train_loader: DataLoader,
+    test_dataloaders: Dict[str, DataLoader],
+    transform: transforms,
+    epochs: int,
+    device: torch.device,
+    project_folder: str,
+    weight_col_loss: float,
+    print_log_freq: int = 100,
+    wandb_log_freq: int = 10,
+    image_log_freq: int = 1000,
+    num_images_log: int = 8,
+    current_epoch: int = 0,
+    use_wandb: bool = True,
+    eval_fraction: float = 0.25,
+    eval_freq: int = 1,
+    save_freq: int = 1,
+):
+    """
+    Train and evaluate the model for several epochs (LeLaN without collision avoidance loss using NoMaD supervision)
+
+    Args:
+        train_model: True or False for training
+        model: model to train
+        model_nomad: model for NoMaD supervision
+        optimizer: optimizer to use
+        lr_scheduler: learning rate scheduler to use
+        noise_scheduler: noise scheduler to use
+        train_loader: dataloader for train dataset
+        test_dataloaders: dict of dataloaders for testing
+        transform: transform to apply to images
+        epochs: number of epochs to train
+        device: device to train on
+        project_folder: folder to save checkpoints and logs
+        weight_col_loss: weight for collision avoidance loss using NoMaD supervisions
+        print_log_freq: frequency of printing to console        
+        wandb_log_freq: frequency of logging to wandb
+        image_log_freq: frequency of logging images to wandb
+        num_images_log: number of images to log to wandb
+        current_epoch: epoch to start training from
+        use_wandb: whether to log to wandb or not
+        eval_fraction: fraction of training data to use for evaluation
+        eval_freq: frequency of evaluation
+        save_freq: frequency of saving model        
+    """
+    latest_path = os.path.join(project_folder, f"latest.pth")
+    ema_model = EMAModel(model=model,power=0.75) #[TODO] for diffusion model
+    ema_model_nomad = EMAModel(model=model_nomad,power=0.75) #[TODO] for diffusion model
+    model_copy = copy.deepcopy(model)   
+            
+    for epoch in range(current_epoch, current_epoch + epochs):
+        if train_model:
+            print(
+            f"Start ViNT DP Training Epoch {epoch}/{current_epoch + epochs - 1}"
+            )
+            train_lelan_col2(
+                model=model,
+                model_copy = model_copy,
+                ema_model=ema_model,
+                ema_model_nomad=ema_model_nomad,                
+                optimizer=optimizer,
+                dataloader=train_loader,
+                transform=transform,
+                device=device,
+                noise_scheduler=noise_scheduler,
+                project_folder=project_folder,
+                weight_col_loss=weight_col_loss,
+                epoch=epoch,
+                print_log_freq=print_log_freq,
+                wandb_log_freq=wandb_log_freq,
+                image_log_freq=image_log_freq,
+                num_images_log=num_images_log,
+                use_wandb=use_wandb,
+            )
+            lr_scheduler.step()
+
+        if epoch % save_freq == 0:
+            numbered_path = os.path.join(project_folder, f"{epoch}.pth")
+            torch.save(model.state_dict(), numbered_path)
+            torch.save(model.state_dict(), latest_path)
+            print(f"Saved model to {numbered_path}")
+
+            # save optimizer
+            numbered_path = os.path.join(project_folder, f"optimizer_{epoch}.pth")
+            latest_optimizer_path = os.path.join(project_folder, f"optimizer_latest.pth")
+            torch.save(optimizer.state_dict(), latest_optimizer_path)
+
+            # save scheduler
+            numbered_path = os.path.join(project_folder, f"scheduler_{epoch}.pth")
+            latest_scheduler_path = os.path.join(project_folder, f"scheduler_latest.pth")
+            torch.save(lr_scheduler.state_dict(), latest_scheduler_path)
+
+        if (epoch + 1) % eval_freq == 0: 
+            for dataset_type in test_dataloaders:
+                print(
+                    f"Start {dataset_type} ViNT DP Testing Epoch {epoch}/{current_epoch + epochs - 1}"
+                )
+                loader = test_dataloaders[dataset_type]
+                evaluate_lelan_col2(
+                    eval_type=dataset_type,
+                    model_copy = model_copy,                    
+                    ema_model=model,
+                    ema_model_nomad=ema_model_nomad,                    
+                    dataloader=loader,
+                    transform=transform,
+                    device=device,
+                    noise_scheduler=noise_scheduler,
+                    project_folder=project_folder,
+                    weight_col_loss=weight_col_loss,                    
+                    epoch=epoch,
+                    print_log_freq=print_log_freq,
+                    num_images_log=num_images_log,
+                    wandb_log_freq=wandb_log_freq,
+                    use_wandb=use_wandb,
+                    eval_fraction=eval_fraction,
+                )
+        wandb.log({
+            "lr": optimizer.param_groups[0]["lr"],
+        }, commit=False)
+
+        if lr_scheduler is not None:
+            lr_scheduler.step()
+
+        # log average eval loss
+        wandb.log({}, commit=False)
+
+        wandb.log({
+            "lr": optimizer.param_groups[0]["lr"],
+        }, commit=False)
+
+        
+    # Flush the last set of eval logs
+    wandb.log({})
+
 def load_model(model, model_type, checkpoint: dict) -> None:
     """Load model from checkpoint."""
-    if model_type == "nomad" or model_type == "lelan" or model_type == "lelan_col" :
+    if model_type == "nomad" or model_type == "lelan" or model_type == "lelan_col" or model_type == "lelan_col2":
         state_dict = checkpoint
         model.load_state_dict(state_dict, strict=False)
     else:

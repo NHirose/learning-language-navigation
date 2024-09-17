@@ -4,7 +4,7 @@ run_name: lelan
 # training setup
 use_wandb: True # set to false if you don't want to log to wandb
 train: False
-batch_size: 256
+batch_size: 200
 eval_batch_size: 400
 epochs: 100
 gpu_ids: [1]
@@ -22,7 +22,7 @@ plateau_factor: 0.5
 seed: 0
 
 # model params
-model_type: lelan_col #lelan --> no history of image, #lelan_col --> with history of image  
+model_type: lelan_col2 #lelan --> no history of image, #lelan_col --> with history of image  
 vision_encoder: lelan_clip_film #lnp_clip_film
 encoding_size: 256
 obs_encoder: efficientnet-b0
@@ -96,5 +96,4 @@ eval_freq: 1 # in epochs 20
 save_freq: 3 # in epochs
 
 load_run: lelan-release/lelan_2024_09_12_17_32_13
-#load_run: lelan-release/lelan_old
 load_nomad: nomad/nomad_crop

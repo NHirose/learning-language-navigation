@@ -34,3 +34,4 @@ BUMPER_TOPIC = "/mobile_base/events/bumper"
 JOY_BUMPER_TOPIC = "/joy_bumper"
 
 # move the robot
+VELOCITY_LELAN_TOPIC = "/vel_lelan"

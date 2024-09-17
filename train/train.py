@@ -39,6 +39,7 @@ from vint_train.training.train_eval_loop import (
     train_eval_loop_nomad,
     train_eval_loop_lelan,
     train_eval_loop_lelan_col,
+    train_eval_loop_lelan_col2,
     load_model,
 )
 
@@ -270,7 +271,7 @@ def main(config):
                 text_encoder=text_encoder
             )                
           
-    elif config["model_type"] == "lelan_col":
+    elif config["model_type"] == "lelan_col" or config["model_type"] == "lelan_col2":
         if config["vision_encoder"] == "lelan_clip_film":
             vision_encoder = LeLaN_clip_FiLM_temp(
                 obs_encoding_size=config["encoding_size"],
@@ -484,7 +485,32 @@ def main(config):
             eval_fraction=config["eval_fraction"],
             eval_freq=config["eval_freq"],
             save_freq=config["save_freq"],
-        )                   
+        )      
+    elif config["model_type"] == "lelan_col2":
+        train_eval_loop_lelan_col2(
+            train_model=config["train"],
+            model=model,
+            model_nomad=model_nomad,            
+            optimizer=optimizer,
+            lr_scheduler=scheduler,
+            noise_scheduler=noise_scheduler,
+            train_loader=train_loader,
+            test_dataloaders=test_dataloaders,
+            transform=transform,
+            epochs=config["epochs"],
+            device=device,
+            project_folder=config["project_folder"],
+            weight_col_loss=config["weight_col_loss"],            
+            print_log_freq=config["print_log_freq"],
+            wandb_log_freq=config["wandb_log_freq"],
+            image_log_freq=config["image_log_freq"],
+            num_images_log=config["num_images_log"],
+            current_epoch=current_epoch,
+            use_wandb=config["use_wandb"],
+            eval_fraction=config["eval_fraction"],
+            eval_freq=config["eval_freq"],
+            save_freq=config["save_freq"],
+        )                          
     else:
         train_eval_loop_nomad(
             train_model=config["train"],

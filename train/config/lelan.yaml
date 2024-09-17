@@ -103,6 +103,6 @@ pairwise_test_freq: 0 # in epochs
 eval_fraction: 1. # 0.25
 wandb_log_freq: 10 # in iterations
 eval_freq: 1 # in epochs 20
-save_freq: 3 # in epochs
+save_freq: 1 # in epochs
 
-#load_run: lelan-release/xxxxxxxx #xxxxxxxx is the folder of the pretrained checkpoint
+load_run: lelan-release/lelan_2024_09_16_18_12_27 #xxxxxxxx is the folder of the pretrained checkpoint

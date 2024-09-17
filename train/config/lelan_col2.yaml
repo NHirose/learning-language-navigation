@@ -3,11 +3,11 @@ run_name: lelan
 
 # training setup
 use_wandb: True # set to false if you don't want to log to wandb
-train: False
-batch_size: 256
+train: True
+batch_size: 200
 eval_batch_size: 400
-epochs: 100
-gpu_ids: [1]
+epochs: 30
+gpu_ids: [0]
 num_workers: 1 #12
 lr: 1e-4
 optimizer: adamw
@@ -22,7 +22,7 @@ plateau_factor: 0.5
 seed: 0
 
 # model params
-model_type: lelan_col #lelan --> no history of image, #lelan_col --> with history of image  
+model_type: lelan_col2 #lelan --> no history of image, #lelan_col --> with history of image  
 vision_encoder: lelan_clip_film #lnp_clip_film
 encoding_size: 256
 obs_encoder: efficientnet-b0
@@ -68,21 +68,49 @@ feature_size: 4096
 
 datasets:  
   go_stanford4:
-    #data_folder: /home/noriaki/visualnav-transformer_combine/gnm_dataset/go_stanford/ # datasets/stanford_go_new
     train: ../dataset/lelan_gs4/train/
     test: ../dataset/lelan_gs4/test/
     image: ../dataset/dataset_LeLaN_gs4/image/
     pickle: ../dataset/dataset_LeLaN_gs4/pickle/
-    #odom: /media/noriaki/Noriaki_Data/data_GS/dataset_odom.txt
-    #end_slack: 0
-    #goals_per_obs: 2 # increase dataset size
-    #negative_mining: True
     backside: False
     aug_seq: False
     only_front: False
-    #imsize: 580
-    #height: 580
-    #width: 1160
+            
+  sacson:
+    train: ../dataset/lelan_sacson/train/
+    test: ../dataset/lelan_sacson/test/
+    image: ../dataset/dataset_LeLaN_sacson/
+    pickle: ../dataset/dataset_LeLaN_sacson/
+    backside: False
+    aug_seq: False
+    only_front: False
+            
+  go_stanford2:
+    train: ../dataset/lelan_gs2/train/
+    test: ../dataset/lelan_gs2/test/
+    image: ../dataset/dataset_LeLaN_gs2/
+    pickle: ../dataset/dataset_LeLaN_gs2/
+    backside: False
+    aug_seq: False
+    only_front: False
+
+  humanw:
+    train: ../dataset/lelan_humanw/train/
+    test: ../dataset/lelan_humanw/test/
+    image: ../dataset/dataset_LeLaN_humanwalk/
+    pickle: ../dataset/dataset_LeLaN_humanwalk/    
+    backside: False
+    aug_seq: False 
+    only_front: True   
+
+  youtube:
+    train: ../dataset/lelan_youtube/train/
+    test: ../dataset/lelan_youtube/test/
+    image: ../dataset/dataset_LeLaN_youtube/
+    pickle: ../dataset/dataset_LeLaN_youtube/        
+    backside: False
+    aug_seq: False 
+    only_front: True  
         
 # logging stuff
 ## =0 turns off
@@ -96,5 +124,4 @@ eval_freq: 1 # in epochs 20
 save_freq: 3 # in epochs
 
 load_run: lelan-release/lelan_2024_09_12_17_32_13
-#load_run: lelan-release/lelan_old
 load_nomad: nomad/nomad_crop

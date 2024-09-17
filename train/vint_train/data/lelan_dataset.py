@@ -290,8 +290,9 @@ class LeLaN_Dataset(Dataset):
             print(f"Failed to load image {image_path}")
 
     def _resize_norm(self, image, size):
-        return TF.resize(2.0*(image - 0.5), size)
-
+        return TF.resize(image, size)
+        #return TF.resize(2.0*(image - 0.5), size)
+        
     def _get_augdata(self, ):
         aug_data_list = []
         for num in range(len(self.pickle_path)):

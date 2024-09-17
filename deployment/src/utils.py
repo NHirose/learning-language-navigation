@@ -27,6 +27,10 @@ from vint_train.models.nomad.nomad_vint import NoMaD_ViNT, replace_bn_with_gn
 from diffusion_policy.model.diffusion.conditional_unet1d import ConditionalUnet1D
 from vint_train.data.data_utils import IMAGE_ASPECT_RATIO
 
+from vint_train.models.lelan.lelan import LeLaN_clip, LeLaN_clip_temp, DenseNetwork_lelan
+from vint_train.models.lelan.lelan_comp import LeLaN_clip_FiLM, LeLaN_clip_FiLM_temp
+import clip
+import cv2
 
 def load_model(
     model_path: str,
@@ -92,13 +96,95 @@ def load_model(
             noise_pred_net=noise_pred_net,
             dist_pred_net=dist_pred_network,
         )
+    elif config["model_type"] == "lelan":
+        if config["vision_encoder"] == "lelan_clip_film":
+            vision_encoder = LeLaN_clip_FiLM(
+                obs_encoding_size=config["encoding_size"],
+                context_size=config["context_size"],
+                mha_num_attention_heads=config["mha_num_attention_heads"],
+                mha_num_attention_layers=config["mha_num_attention_layers"],
+                mha_ff_dim_factor=config["mha_ff_dim_factor"],
+                feature_size=config["feature_size"],
+                clip_type=config["clip_type"],
+            )
+            vision_encoder = replace_bn_with_gn(vision_encoder)   
+            
+            text_encoder, preprocess = clip.load(config["clip_type"]) #, device=device       
+
+        else: 
+            raise ValueError(f"Vision encoder {config['vision_encoder']} not supported")
+            
+        dist_pred_network = DenseNetwork_lelan(embedding_dim=config["encoding_size"], control_horizon=config["len_traj_pred"])
+                  
+        if config["vision_encoder"] == "lelan_clip_film":
+            model = LeLaN_clip(
+                vision_encoder=vision_encoder,
+                dist_pred_net=dist_pred_network,
+                text_encoder=text_encoder
+            )                
+          
+    elif config["model_type"] == "lelan_col" or config["model_type"] == "lelan_col2":
+        if config["vision_encoder"] == "lelan_clip_film":
+            vision_encoder = LeLaN_clip_FiLM_temp(
+                obs_encoding_size=config["encoding_size"],
+                context_size=config["context_size"],
+                mha_num_attention_heads=config["mha_num_attention_heads"],
+                mha_num_attention_layers=config["mha_num_attention_layers"],
+                mha_ff_dim_factor=config["mha_ff_dim_factor"],
+                feature_size=config["feature_size"],
+                clip_type=config["clip_type"],
+            )
+            vision_encoder = replace_bn_with_gn(vision_encoder)    
+            text_encoder, preprocess = clip.load(config["clip_type"])    
+            text_encoder.to(torch.float32)  
+            
+            vision_encoder_nomad = NoMaD_ViNT(
+                obs_encoding_size=config["encoding_size"],
+                context_size=config["context_size"],
+                mha_num_attention_heads=config["mha_num_attention_heads"],
+                mha_num_attention_layers=config["mha_num_attention_layers"],
+                mha_ff_dim_factor=config["mha_ff_dim_factor"],
+            )
+            vision_encoder_nomad = replace_bn_with_gn(vision_encoder_nomad)
+
+            noise_pred_net_nomad = ConditionalUnet1D(
+                    input_dim=2,
+                    global_cond_dim=config["encoding_size"],
+                    down_dims=config["down_dims"],
+                    cond_predict_scale=config["cond_predict_scale"],
+                )
+            dist_pred_network_nomad = DenseNetwork(embedding_dim=config["encoding_size"])
+            dist_pred_network = DenseNetwork_lelan(embedding_dim=config["encoding_size"], control_horizon=config["len_traj_pred"])
+            
+        else: 
+            raise ValueError(f"Vision encoder {config['vision_encoder']} not supported")
+
+        model = LeLaN_clip_temp(
+            vision_encoder=vision_encoder,
+            dist_pred_net=dist_pred_network,            
+            text_encoder=text_encoder,
+        )
+        
+        model_nomad = NoMaD(
+            vision_encoder=vision_encoder_nomad,
+            noise_pred_net=noise_pred_net_nomad,
+            dist_pred_net=dist_pred_network_nomad,
+        )
+        """
+        noise_scheduler = DDPMScheduler(
+            num_train_timesteps=config["num_diffusion_iters"],
+            beta_schedule='squaredcos_cap_v2',
+            clip_sample=True,
+            prediction_type='epsilon'
+        )
+        """        
     else:
         raise ValueError(f"Invalid model type: {model_type}")
     
     checkpoint = torch.load(model_path, map_location=device)
-    if model_type == "nomad":
+    if model_type == "nomad" or model_type == "lelan" or model_type == "lelan_col" or model_type == "lelan_col2":
         state_dict = checkpoint
-        model.load_state_dict(state_dict, strict=False)
+        model.load_state_dict(state_dict, strict=True)
     else:
         loaded_model = checkpoint["model"]
         try:
@@ -110,6 +196,26 @@ def load_model(
     model.to(device)
     return model
 
+def pil2cv(image):
+	new_image = np.array(image, dtype=np.uint8)
+	if new_image.ndim == 2:
+		pass
+	elif new_image.shape[2] == 3:
+		new_image = cv2.cvtColor(new_image, cv2.COLOR_RGB2BGR)
+	elif new_image.shape[2] == 4:
+		new_image = cv2.cvtColor(new_image, cv2.COLOR_RGBA2BGRA)
+	return new_image
+
+def cv2pil(image):
+	new_image = image.copy()
+	if new_image.ndim == 2:
+		pass
+	elif new_image.shape[2] == 3:
+		new_image = cv2.cvtColor(new_image, cv2.COLOR_BGR2RGB)
+	elif new_image.shape[2] == 4:
+		new_image = cv2.cvtColor(new_image, cv2.COLOR_BGRA2RGBA)
+	new_image = PILImage.fromarray(new_image)
+	return new_image
 
 def msg_to_pil(msg: Image) -> PILImage.Image:
     img = np.frombuffer(msg.data, dtype=np.uint8).reshape(
@@ -156,6 +262,38 @@ def transform_images(pil_imgs: List[PILImage.Image], image_size: List[int], cent
         transf_imgs.append(transf_img)
     return torch.cat(transf_imgs, dim=1)
     
+def transform_images_lelan(pil_imgs: List[PILImage.Image], image_size: List[int], center_crop: bool = False) -> torch.Tensor:
+    """Transforms a list of PIL image to a torch tensor."""
+    transform_type = transforms.Compose(
+        [
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[
+                                    0.229, 0.224, 0.225]),            
+        ]
+    )
+    image_size_small = (96, 96)
+    
+    if type(pil_imgs) != list:
+        pil_imgs = [pil_imgs]
+    transf_imgs = []
+    for pil_img in pil_imgs:
+        w, h = pil_img.size
+        if center_crop:
+            if w > h:
+                pil_img = TF.center_crop(pil_img, (h, int(h * IMAGE_ASPECT_RATIO)))  # crop to the right ratio
+            else:
+                pil_img = TF.center_crop(pil_img, (int(w / IMAGE_ASPECT_RATIO), w))
+        pil_img = pil_img.resize(image_size_small) 
+        transf_img = transform_type(pil_img)        
+        transf_img = torch.unsqueeze(transf_img, 0)
+        transf_imgs.append(transf_img)
+
+    pil_img = pil_imgs[-1].resize(image_size) 
+    transf_imgx = transform_type(pil_img)       
+    #cur_img = 2.0*(torch.unsqueeze(transf_imgx, 0) - 0.5)
+    cur_img = torch.unsqueeze(transf_imgx, 0)
+                                    
+    return torch.cat(transf_imgs, dim=1), cur_img
 
 # clip angle between -pi and pi
 def clip_angle(angle):

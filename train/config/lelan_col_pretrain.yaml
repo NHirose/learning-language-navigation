@@ -7,7 +7,7 @@ train: True
 batch_size: 256
 eval_batch_size: 400
 epochs: 100
-gpu_ids: [1]
+gpu_ids: [0]
 num_workers: 1 #12
 lr: 1e-4
 optimizer: adamw
@@ -110,4 +110,5 @@ wandb_log_freq: 10 # in iterations
 eval_freq: 1 # in epochs 20
 save_freq: 3 # in epochs
 
+#load_run: lelan-release/lelan_2024_09_11_17_30_45
 load_nomad: nomad/nomad_crop

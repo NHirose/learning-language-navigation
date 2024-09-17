@@ -6,8 +6,8 @@ use_wandb: True # set to false if you don't want to log to wandb
 train: True
 batch_size: 256
 eval_batch_size: 400
-epochs: 100
-gpu_ids: [1]
+epochs: 30
+gpu_ids: [0]
 num_workers: 1 #12
 lr: 1e-4
 optimizer: adamw
@@ -23,10 +23,11 @@ seed: 0
 
 # model params
 model_type: lelan_col #lelan --> no history of image, #lelan_col --> with history of image  
-vision_encoder: lelan_clip_film
+vision_encoder: lelan_clip_film #lnp_clip_film
 encoding_size: 256
 obs_encoder: efficientnet-b0
 clip_type: "ViT-B/32"
+#attn_unet: False
 cond_predict_scale: False
 mha_num_attention_heads: 4
 mha_num_attention_layers: 4
@@ -36,15 +37,26 @@ down_dims: [64, 128, 256]
 # diffusion model params
 num_diffusion_iters: 10
 
+# mask 
+#goal_mask_prob: 0.5
+
 # normalization for the action space
 normalize: True
 
-weight_col_loss: 10.0
+weight_col_loss: 5.0
 
 # context
 context_type: temporal
 context_size: 1 # 5
 alpha: 1e-4
+
+# distance bounds for distance and action and distance predictions 
+#distance:
+#  min_dist_cat: 0
+#  max_dist_cat: 20
+#action:
+#  min_dist_cat: 3
+#  max_dist_cat: 20
 
 # action output params
 len_traj_pred: 24
@@ -101,6 +113,7 @@ datasets:
     only_front: True  
         
 # logging stuff
+## =0 turns off
 print_log_freq: 1000 # in iterations
 image_log_freq: 40 #0 # in iterations 1000 40
 num_images_log: 8 #0 
@@ -110,5 +123,5 @@ wandb_log_freq: 10 # in iterations
 eval_freq: 1 # in epochs 20
 save_freq: 3 # in epochs
 
-load_run: lelan-release/xxxxxxxx #xxxxxxxx is the folder of the pretrained checkpoint
+load_run: lelan-release/lelan_2024_09_12_17_32_13
 load_nomad: nomad/nomad_crop
