@@ -123,7 +123,7 @@ There are three steps in our approach, 0) search all node images and specify the
 
 ##### Collecting a Topological Map
 
-_Make sure to run these scripts inside the `./deployment/src/` directory._
+_Make sure to run these scripts inside the `learning-language-navigation/deployment/src/` directory._
 
 ##### Record the rosbag: 
 Run this command to teleoperate the robot with the joystick and camera. This command opens up three windows 
@@ -144,7 +144,7 @@ When the bag stops playing, kill all sessions.
 
 
 #### Running the model 
-The `<topomap_dir>` is the name of the directory in `vint_release/deployment/topomaps/images` that has the images corresponding to the nodes in the topological map. The images are ordered by name from 0 to N.
+The `<topomap_dir>` is the name of the directory in `learning-language-navigation/deployment/topomaps/images` that has the images corresponding to the nodes in the topological map. The images are ordered by name from 0 to N.
 
 Please open 4 windows:
 
