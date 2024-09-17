@@ -127,9 +127,9 @@ _Make sure to run these scripts inside the `learning-language-navigation/deploym
 
 ##### Record the rosbag: 
 Run this command to teleoperate the robot with the joystick and camera. This command opens up three windows 
-1. launch the robot driver: please launch the robot driver and setup the node, which eable us to run the robot via a topic of `geometry_msgs/Twist` for the velocity commands, `/cmd_vel`. 
-2. launch the camera driver: please launch the `usb_cam` node for the camera. 
-3. launch the joystic driver: please launch the joystic driver to publish `/cmd_vel`.
+1. Launch the robot driver: please launch the robot driver and setup the node, which eable us to run the robot via a topic of `geometry_msgs/Twist` for the velocity commands, `/cmd_vel`. 
+2. Launch the camera driver: please launch the `usb_cam` node for the camera. 
+3. Launch the joystic driver: please launch the joystic driver to publish `/cmd_vel`.
 4. `rosbag record /usb_cam/image_raw -o <bag_name>`: This command isn’t run immediately (you have to click Enter). It will be run in the vint_release/deployment/topomaps/bags directory, where we recommend you store your rosbags.
 
 Once you are ready to record the bag, run the `rosbag record` script and teleoperate the robot on the map you want the robot to follow. When you are finished with recording the path, kill the `rosbag record` command, and then kill all sessions.
