@@ -66,7 +66,7 @@ Run this inside the `learning-language-navigation/train` directory:
 python train.py -c ./config/lelan.yaml
 ```
 #### with collision avoidance using the NoMaD supervisions
-At first, we need to train the policy without the collision avoidance loss. Then we can finetune it with the collision avoidance loss using the NoMaD supervisions.
+Before training, please download the checkpoint of the finetuned nomad checkpoints for the cropped goal images from [here](https://drive.google.com/drive/folders/19yJcSJvGmpGlo0X-0owQKrrkPFmPKVt8?usp=sharing) and save `nomad_crop.pth` at `learning-language-navigation/train/logs/nomad?nomad_crop/`. For collision avoindace, we need the pre-train the policy without the collision avoidance loss. After that we can finetune it with the collision avoidance loss using the NoMaD supervisions.
 Run this inside the `learning-language-navigation/train` directory for pretraining:
 ```
 python train.py -c ./config/lelan_col_pretrain.yaml

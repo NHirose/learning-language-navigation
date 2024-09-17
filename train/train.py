@@ -401,7 +401,7 @@ def main(config):
     if "load_nomad" in config:
         load_project_folder = os.path.join("logs", config["load_nomad"])
         print("Loading NoMaD model from ", load_project_folder)
-        latest_path = os.path.join(load_project_folder, "latest.pth")
+        latest_path = os.path.join(load_project_folder, "nomad_crop.pth")
         latest_checkpoint = torch.load(latest_path) #f"cuda:{}" if torch.cuda.is_available() else "cpu")
         load_model(model_nomad, config["model_type"], latest_checkpoint)
         model_nomad.to(device)
