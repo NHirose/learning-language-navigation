@@ -108,7 +108,11 @@ If the target object location is close to the robot and visible from the robot, 
 
 1. `roscore`
 2. launch camera node: Please start the camera node to publish the topic, `sensor_msgs/Image`. For example, we use the [usb_cam](http://wiki.ros.org/usb_cam) for the [ELP fisheye camera](https://www.amazon.com/ELP-170degree-Fisheye-640x480-Resolution/dp/B00VTHD17W), the [cv_camera](http://wiki.ros.org/cv_camera) for the [spherical camera](https://us.ricoh-imaging.com/product/theta-s/) and the [realsense2_camera](http://wiki.ros.org/realsense2_camera) for the [Intel D435i](https://www.intelrealsense.com/depth-camera-d435i/). We recommned to use a wide-angle RGB camera to robustly capture the target objects.
-3. `python lelan_policy_col.py -p <prompt for target object> -c <path for the config file> -m <path for the moel checkpoint> -r <boolean for camera type>`: This command immediately run the robot toward the target objects, which correspond to the `<prompt for target object>` such as `office chair`. The example of `<path for the config file>` is `'../../train/config/lelan.yaml'` or `'../../train/config/lelan_col.yaml'`, which you used in your training. `<path for the moel checkpoint>` is the path for your trained model. The default is `'../model_weights/wo_col_loss_wo_temp.pth'`. `<bool for camera type>` is the boolean to specify whether the camera is the Ricoh Theta s or not.
+3. launch LeLaN policy: This command immediately run the robot toward the target objects, which correspond to the `<prompt for target object>` such as `office chair`. The example of `<path for the config file>` is `'../../train/config/lelan.yaml'` or `'../../train/config/lelan_col.yaml'`, which you used in your training. `<path for the moel checkpoint>` is the path for your trained model. The default is `'../model_weights/wo_col_loss_wo_temp.pth'`. `<bool for camera type>` is the boolean to specify whether the camera is the Ricoh Theta s or not.
+```
+`python lelan_policy_col.py -p <prompt for target object> -c <path for the config file> -m <path for the moel checkpoint> -r <boolean for camera type>`
+```
+
 
 Note that you manually change the topic name, 'TOPIC_NAME_CAMERA' in `lelan_policy_col.py`, before running the last command.
 
