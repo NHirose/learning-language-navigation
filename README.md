@@ -119,7 +119,7 @@ Note that you manually change the topic name, 'TOPIC_NAME_CAMERA' in `lelan_poli
 #### Long-distance Navigation
 
 Since it is difficult for the LeLaN to navigate toward the far target object, we provide the system leveraging the topological map.
-There are three steps in our approach, 0) search all node images and specify the target node capturing the tareget object, 1) move toward the target node, which is close to the target object, and 2) switch the policy to the LeLaN and go to the target object location. In our implementation, we use the ViNT policy for 1). To search the target node in the topological memory, we use Owl-ViT2 for scoring all nodes and select the node with the highest score. Before navigation, we collect the topological map in your environment by teleperation. Then we can run our robot toward the far target object.
+There are three steps in our approach, 0) search all node images and specify the target node capturing the tareget object, 1) move toward the target node, which is close to the target object, and 2) switch the policy to the LeLaN and go to the target object location. To search the target node in the topological memory in 0), we use Owl-ViT2 for scoring all nodes and select the node with the highest score. And, we use the ViNT policy for 1). Before navigation, we collect the topological map in your environment by teleperation. Then we can run our robot toward the far target object.
 
 ##### Collecting a Topological Map
 
