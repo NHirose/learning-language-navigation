@@ -18,7 +18,7 @@ Please down load our code and install some tools for making a conda environment 
 1. Download the repository on your PC:
     ```
     git clone https://github.com/NHirose/learning-language-navigation.git
-    
+    ```
 2. Set up the conda environment:
     ```
     conda env create -f train/train_lelan.yml
@@ -35,7 +35,7 @@ Please down load our code and install some tools for making a conda environment 
     ```
     git clone git@github.com:real-stanford/diffusion_policy.git
     pip install -e diffusion_policy/
-        
+    ``` 
 
 ### Data
 We train our model with the following datasets. We annotate the publicly available robot navigation dataset as well as the in-the-wild videos such as YouTube. In addition, we collect the videos by holding the shperical camera and walking around outside and annotate them by our method. We publish all annotated labels and corresponding images [here](https://drive.google.com/file/d/1ZwSKwhamq8XmF4mcFNisp9H7YX5kQZ6e/view?usp=sharing). Note that we provide the python code to download and save the images from the YouTube videos instead of providing the images, due to avoiding the copyright issue.
