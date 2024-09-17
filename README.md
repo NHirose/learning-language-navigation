@@ -107,19 +107,19 @@ Save the model weights *.pth file in `learning-language-navigation/deployment/mo
 If the target object location is close to the robot and visible from the robot, you can simply run the LeLaN to move toward the target object. 
 
 1. `roscore`
-2. launch camera node: Please start the camera node to publish the topic, `sensor_msgs/Image`. For example, we use the [usb_cam](http://wiki.ros.org/usb_cam) for the [ELP fisheye camera](https://www.amazon.com/ELP-170degree-Fisheye-640x480-Resolution/dp/B00VTHD17W), the [cv_camera](http://wiki.ros.org/cv_camera) for the [spherical camera](https://us.ricoh-imaging.com/product/theta-s/) and the [realsense2_camera](http://wiki.ros.org/realsense2_camera) for the [Intel D435i](https://www.intelrealsense.com/depth-camera-d435i/). We recommned to use a wide-angle RGB camera to robustly capture the target objects.
-3. launch LeLaN policy: This command immediately run the robot toward the target objects, which correspond to the `<prompt for target object>` such as `office chair`. The example of `<path for the config file>` is `'../../train/config/lelan.yaml'` or `'../../train/config/lelan_col.yaml'`, which you used in your training. `<path for the moel checkpoint>` is the path for your trained model. The default is `'../model_weights/wo_col_loss_wo_temp.pth'`. `<bool for camera type>` is the boolean to specify whether the camera is the Ricoh Theta s or not.
+2. Launch camera node: Please start the camera node to publish the topic, `sensor_msgs/Image`. For example, we use the [usb_cam](http://wiki.ros.org/usb_cam) for the [ELP fisheye camera](https://www.amazon.com/ELP-170degree-Fisheye-640x480-Resolution/dp/B00VTHD17W), the [cv_camera](http://wiki.ros.org/cv_camera) for the [spherical camera](https://us.ricoh-imaging.com/product/theta-s/) and the [realsense2_camera](http://wiki.ros.org/realsense2_camera) for the [Intel D435i](https://www.intelrealsense.com/depth-camera-d435i/). We recommned to use a wide-angle RGB camera to robustly capture the target objects.
+3. Launch LeLaN policy: This command immediately run the robot toward the target objects, which correspond to the `<prompt for target object>` such as "office chair". The example of `<path for the config file>` is `'../../train/config/lelan.yaml'`, which you can specify the same yaml file in your training. `<path for the moel checkpoint>` is the path for your trained model. The default is `'../model_weights/wo_col_loss_wo_temp.pth'`. `<bool for camera type>` is the boolean to specify whether the camera is the Ricoh Theta S or not.
 ```
-`python lelan_policy_col.py -p <prompt for target object> -c <path for the config file> -m <path for the moel checkpoint> -r <boolean for camera type>`
+python lelan_policy_col.py -p <prompt for target object> -c <path for the config file> -m <path for the moel checkpoint> -r <boolean for camera type>
 ```
 
 
-Note that you manually change the topic name, 'TOPIC_NAME_CAMERA' in `lelan_policy_col.py`, before running the last command.
+Note that you manually change the topic name, 'TOPIC_NAME_CAMERA' in `lelan_policy_col.py`, before running the above command.
 
 #### Long-distance Navigation
 
-If it is difficult for the LeLaN to navigate toward the far target object, you can leverage the topological map to move toward its target object.
-There are three steps in our approach, 0) search the all node images and specify the target node capturing the tareget object, 1) move toward the target node, which is close to the target object, and 2) go to the target object location by LeLaN. In our implementation, we use the ViNT policy for 1). To search the target node in the topological memory, we use Owl-ViT2 for scoring all nodes and select the node with the highest score. Before navigation, we collect the topological map in your environment by teleperation. Then we can run our robot toward the far target object.
+Since it is difficult for the LeLaN to navigate toward the far target object, we provide the system leveraging the topological map.
+There are three steps in our approach, 0) search all node images and specify the target node capturing the tareget object, 1) move toward the target node, which is close to the target object, and 2) go to the target object location by LeLaN. In our implementation, we use the ViNT policy for 1). To search the target node in the topological memory, we use Owl-ViT2 for scoring all nodes and select the node with the highest score. Before navigation, we collect the topological map in your environment by teleperation. Then we can run our robot toward the far target object.
 
 ##### Collecting a Topological Map
 
