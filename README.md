@@ -1,7 +1,8 @@
 # LeLaN: Learning A Language-conditioned Navigation Policy from In-the-Wild Video
 
-**Contributors**: Noriaki Hirose, Catherine Glossop\*, Ajay Sridhar<sup>\*</sup>, Oier Mees, Sergey Levine  <sup>\*</sup> indicates equal contributiion
+**Contributors**: Noriaki Hirose, Catherine Glossop\*, Ajay Sridhar\*, Oier Mees, Sergey Levine  \* indicates equal contributiion
 
+<sup>1</sup> University of California Berkeley,  <sup>1</sup> Toyota Motor North America
 _Berkeley AI Research_
 
 THIS SOFTWARE AND/OR DATA WAS DEPOSITED IN THE BAIR OPEN RESEARCH COMMONS REPOSITORY ON [DATE].
