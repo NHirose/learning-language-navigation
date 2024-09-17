@@ -100,7 +100,7 @@ We need following three hardwares to navigate the robot toward the target object
 ### Software Setup
 #### Loading the model weights
 
-Save the model weights *.pth file in `learning-language-navigation/deployment/model_weights` folder. Our model's weights are in [this link](https://drive.google.com/drive/folders/19yJcSJvGmpGlo0X-0owQKrrkPFmPKVt8?usp=sharing). In addition, we need the original ViNT policy for the long-distance navigation. The ViNT's weights are in [this link](https://drive.google.com/drive/folders/1a9yWR2iooXFAqjQHetz263--4_2FFggg).
+Save the model weights *.pth file in `learning-language-navigation/deployment/model_weights` folder. Our model's weights are in [this link](https://drive.google.com/drive/folders/19yJcSJvGmpGlo0X-0owQKrrkPFmPKVt8?usp=sharing). In addition, if you want to control the robot toward the far target object, which is not seen from the initial robot location, please download the original ViNT's weights in [this link](https://drive.google.com/drive/folders/1a9yWR2iooXFAqjQHetz263--4_2FFggg) to navigate the robot with the topological memory.
 
 #### Last-mile Navigation
 
