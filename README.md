@@ -1,6 +1,6 @@
 # LeLaN: Learning A Language-conditioned Navigation Policy from In-the-Wild Video
 
-**Contributors**: Noriaki Hirose, Catherine Glossop<sup>\*</sup>, Ajay Sridhar, Oier Mees, Sergey Levine  $$^{*}$$ indicates equal contributiion
+**Contributors**: Noriaki Hirose, Catherine Glossop$$^{\*}$$, Ajay Sridhar$$^{\*}$$, Oier Mees, Sergey Levine  $$^{\*}$$ indicates equal contributiion
 
 _Berkeley AI Research_
 
