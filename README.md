@@ -90,7 +90,7 @@ The subfolder `learning-language-navigation/deployment/` contains code to load a
 
 ### Hardware Setup
 We need following three hardwares to navigate the robot toward the target object location with the LeLaN.
-1. Robot: Please setup the ROS on your robot to enable us to control the robot by "/cmd_vel" of geometry_msgs/Twist message.
+1. Robot: Please setup the ROS on your robot to enable us to control the robot by "/cmd_vel" of geometry_msgs/Twist message. (We tested on the Vizbot(Roomba base robot) and the quadruped robot Go1.)
 
 2. Camera: Please mount the camera on your robot, which we can use on ROS (publish `sensor_msgs/Image`).
 
