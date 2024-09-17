@@ -92,7 +92,7 @@ The subfolder `learning-language-navigation/deployment/` contains code to load a
 We need following three hardwares to navigate the robot toward the target object location with the LeLaN.
 1. Robot: Please setup the ROS on your robot to enable us to control the robot by "/cmd_vel" of geometry_msgs/Twist message. We tested on the Vizbot(Roomba base robot) and the quadruped robot Go1.
 
-2. Camera: Please mount the camera on your robot, which we can use on ROS (publish `sensor_msgs/Image`).
+2. Camera: Please mount the camera on your robot, which we can use on ROS to publish `sensor_msgs/Image`. We tested the [ELP fisheye camera](https://www.amazon.com/ELP-170degree-Fisheye-640x480-Resolution/dp/B00VTHD17W), the [Ricoh Theta S](https://us.ricoh-imaging.com/product/theta-s/), and the [Intel D435i](https://www.intelrealsense.com/depth-camera-d435i/).
 
 3. Joystick: [Joystick](https://www.amazon.com/Logitech-Wireless-Nano-Receiver-Controller-Vibration/dp/B0041RR0TW)/[keyboard teleop](http://wiki.ros.org/teleop_twist_keyboard) that works with Linux. Add the index mapping for the _deadman_switch_ on the joystick to the `learning-language-navigation/deployment/config/joystick.yaml`. You can find the mapping from buttons to indices for common joysticks in the [wiki](https://wiki.ros.org/joy). 
 
