@@ -81,12 +81,8 @@ python train.py -c ./config/lelan_col.yaml
 `config/lelan.yaml` and `config/lelan_col.yaml` is the premade yaml files for the LeLaN.
 
 
-#### Training your model from a checkpoint
-Instead of training from scratch, you can also load an existing checkpoint from the published results.
-Add `load_run: <project_name>/<log_run_name>`to your .yaml config file in `learning-language-navigation/train/config/`. The `*.pth` of the file you are loading to be saved in this file structure and renamed to “latest”: `learning-language-navigation/train/logs/<project_name>/<log_run_name>/latest.pth`. This makes it easy to train from the checkpoint of a previous run since logs are saved this way by default. Note: if you are loading a checkpoint from a previous run, check for the name the run in the `learning-language-navigation/train/logs/<project_name>/`, since the code appends a string of the date to each run_name specified in the config yaml file of the run to avoid duplicate run names. 
-
-
-If you want to use our checkpoints, you can download the `*.pth` files from [this link](https://drive.google.com/drive/folders/19yJcSJvGmpGlo0X-0owQKrrkPFmPKVt8?usp=sharing).
+##### Training your model from a checkpoint
+Please carefully check the original [code](https://github.com/robodhruv/visualnav-transformer) to know how to train your model from a checkpoint.
 
 
 ## Deployment
