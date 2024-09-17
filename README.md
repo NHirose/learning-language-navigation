@@ -86,7 +86,7 @@ Please carefully check the original [code](https://github.com/robodhruv/visualna
 
 
 ## Deployment
-This subfolder contains code to load a pre-trained LeLaN and deploy it on your robot platform with a [NVIDIA Jetson Orin](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-orin/)(We test our policy on Nvidia Jetson Orin AGX). 
+The subfolder `learning-language-navigation/deployment/` contains code to load a pre-trained LeLaN and deploy it on your robot platform with a [NVIDIA Jetson Orin](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-orin/)(We test our policy on Nvidia Jetson Orin AGX). 
 
 ### Hardware Setup
 We need following three hardwares to navigate the robot toward the target object location with the LeLaN.
