@@ -13,7 +13,7 @@ THIS SOFTWARE AND/OR DATA WAS DEPOSITED IN THE BAIR OPEN RESEARCH COMMONS REPOSI
 This repository contains code for training our language-conditioned navigation policy with our data, pre-trained model checkpoints, as well as example code to deploy it on a real robot. We made our code by editing the origional code base for training the general navigation models, GNM, ViNT, and NoMaD in this [repository](https://github.com/robodhruv/visualnav-transformer). We try to add our LeLaN code with keeping the original code as much as possible. We appricate the GNM, ViNT, and NoMaD teams (We got their approval to edit and add our codes on their base).
 
 ### Preliminary
-Please down load our code and install some tools for making a conda environment to run our code. We recommend to run our code in the conda environment.
+Please down load our code and install some tools for making a conda environment to run our code. We recommend to run our code in the conda environment, although we do not mention the conda environments later.
 
 1. Download the repository on your PC:
     ```
@@ -38,7 +38,7 @@ Please down load our code and install some tools for making a conda environment 
     ``` 
 
 ### Data
-We train our model with the following datasets. We annotate the publicly available robot navigation dataset as well as the in-the-wild videos such as YouTube. In addition, we collect the videos by holding the shperical camera and walking around outside and annotate them by our method. We publish all annotated labels and corresponding images [here](https://drive.google.com/file/d/1ZwSKwhamq8XmF4mcFNisp9H7YX5kQZ6e/view?usp=sharing). Note that we provide the python code to download and save the images from the YouTube videos instead of providing the images, due to avoiding the copyright issue.
+We train our model with the following datasets. We annotate the publicly available robot navigation dataset as well as the in-the-wild videos such as YouTube. In addition, we collected the videos by holding the shperical camera and walking around outside and annotated them by our method. We publish all annotated labels and corresponding images [here](https://drive.google.com/file/d/1ZwSKwhamq8XmF4mcFNisp9H7YX5kQZ6e/view?usp=sharing). Note that we provide the python code to download and save the images from the YouTube videos instead of providing the images, due to avoiding the copyright issue.
 
 - Robot navigation dataset (GO Stanford2, GO Stanford4, and SACSoN)
 - Human-walking dataset
