@@ -155,6 +155,7 @@ The `<topomap_dir>` is the name of the directory in `learning-language-navigatio
 When the robot is finishing navigating, kill the `pd_controller_lelan.py` script, and then kill all sessions. In the default setting, we run the simplest LeLaN policy not feeding the history of the image and not considering collision avoidance. 
 
 ## Citing
+Our main project
 ```
 @inproceedings{hirose2024lelan,
   title     = {LeLaN: Learning A Language-conditioned Navigation Policy from In-the-Wild Video},
@@ -163,5 +164,42 @@ When the robot is finishing navigating, kill the `pd_controller_lelan.py` script
   year      = {2024},
   url       = {https://arxiv.org/abs/xxxxxxxx}
 }
+```
+Robotic navigation dataset: GO Stanford 2
+```
+@inproceedings{hirose2018gonet,
+  title={Gonet: A semi-supervised deep learning approach for traversability estimation},
+  author={Hirose, Noriaki and Sadeghian, Amir and V{\'a}zquez, Marynel and Goebel, Patrick and Savarese, Silvio},
+  booktitle={2018 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
+  pages={3044--3051},
+  year={2018},
+  organization={IEEE}
+}
 
 ```
+Robotic navigation dataset: GO Stanford 4
+```
+@article{hirose2019deep,
+  title={Deep visual mpc-policy learning for navigation},
+  author={Hirose, Noriaki and Xia, Fei and Mart{\'\i}n-Mart{\'\i}n, Roberto and Sadeghian, Amir and Savarese, Silvio},
+  journal={IEEE Robotics and Automation Letters},
+  volume={4},
+  number={4},
+  pages={3184--3191},
+  year={2019},
+  publisher={IEEE}
+}
+
+```
+Robotic navigation dataset: SACSoN(HuRoN)
+```
+@article{hirose2023sacson,
+  title={Sacson: Scalable autonomous control for social navigation},
+  author={Hirose, Noriaki and Shah, Dhruv and Sridhar, Ajay and Levine, Sergey},
+  journal={IEEE Robotics and Automation Letters},
+  year={2023},
+  publisher={IEEE}
+}
+
+```
+
