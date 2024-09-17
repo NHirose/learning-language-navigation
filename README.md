@@ -7,7 +7,7 @@
 
 THIS SOFTWARE AND/OR DATA WAS DEPOSITED IN THE BAIR OPEN RESEARCH COMMONS REPOSITORY ON [DATE].
 
-[Project Page](https://learning-language-navigation.github.io) | [Dataset](https://drive.google.com/file/d/1ZwSKwhamq8XmF4mcFNisp9H7YX5kQZ6e/view?usp=sharing) | [Pre-Trained Models](https://drive.google.com/drive/folders/19yJcSJvGmpGlo0X-0owQKrrkPFmPKVt8?usp=sharing)
+[Project Page](https://learning-language-navigation.github.io) | [Dataset](https://drive.google.com/file/d/1IazHcIyPGO7ENswz8_sGCIGBXF8_sZJK/view?usp=sharing) | [Pre-Trained Models](https://drive.google.com/drive/folders/19yJcSJvGmpGlo0X-0owQKrrkPFmPKVt8?usp=sharing)
 
 ## Overview
 This repository contains code for training our language-conditioned navigation policy with our data, pre-trained model checkpoints, as well as example code to deploy it on a real robot. We made our code by editing the origional code base for training the general navigation models, GNM, ViNT, and NoMaD in this [repository](https://github.com/robodhruv/visualnav-transformer). We try to add our LeLaN code with keeping the original code as much as possible. We appricate the GNM, ViNT, and NoMaD teams (We got their approval to edit and add our codes on their base).
@@ -38,14 +38,14 @@ Please down load our code and install some tools for making a conda environment 
     ``` 
 
 ### Data
-We train our model with the following datasets. We annotate the publicly available robot navigation dataset as well as the in-the-wild videos such as YouTube. In addition, we collected the videos by holding the shperical camera and walking around outside and annotated them by our method. We publish all annotated labels and corresponding images [here](https://drive.google.com/file/d/1ZwSKwhamq8XmF4mcFNisp9H7YX5kQZ6e/view?usp=sharing). Note that we provide the python code to download and save the images from the YouTube videos instead of providing the images, due to avoiding the copyright issue.
+We train our model with the following datasets. We annotate the publicly available robot navigation dataset as well as the in-the-wild videos such as YouTube. In addition, we collected the videos by holding the shperical camera and walking around outside and annotated them by our method. We publish all annotated labels and corresponding images [here](https://drive.google.com/file/d/1IazHcIyPGO7ENswz8_sGCIGBXF8_sZJK/view?usp=sharing). Note that we provide the python code to download and save the images from the YouTube videos instead of providing the images, due to avoiding the copyright issue.
 
 - Robot navigation dataset (GO Stanford2, GO Stanford4, and SACSoN)
 - Human-walking dataset
 - YouTube tour dataset
 
 Followings are the process to use our dataset on our training code.
-1. Download the dataset from [here](https://drive.google.com/file/d/1ZwSKwhamq8XmF4mcFNisp9H7YX5kQZ6e/view?usp=sharing) and unzip the file in the downloaded repository:
+1. Download the dataset from [here](https://drive.google.com/file/d/1IazHcIyPGO7ENswz8_sGCIGBXF8_sZJK/view?usp=sharing) and unzip the file in the downloaded repository:
 
 2. Change the directory:
     ```
@@ -158,7 +158,7 @@ When the robot is finishing navigating, kill the `pd_controller_lelan.py` script
 ```
 @inproceedings{hirose2024lelan,
   title     = {LeLaN: Learning A Language-conditioned Navigation Policy from In-the-Wild Video},
-  author    = {Noriaki Hirose and Ajay Sridhar and Catherine Glossop and Oier Mees and Sergey Levine},
+  author    = {Noriaki Hirose and Catherine Glossop and Ajay Sridhar and Oier Mees and Sergey Levine},
   booktitle = {8th Annual Conference on Robot Learning},
   year      = {2024},
   url       = {https://arxiv.org/abs/xxxxxxxx}
