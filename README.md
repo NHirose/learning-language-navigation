@@ -175,7 +175,6 @@ Robotic navigation dataset: GO Stanford 2
   year={2018},
   organization={IEEE}
 }
-
 ```
 Robotic navigation dataset: GO Stanford 4
 ```
@@ -189,7 +188,6 @@ Robotic navigation dataset: GO Stanford 4
   year={2019},
   publisher={IEEE}
 }
-
 ```
 Robotic navigation dataset: SACSoN(HuRoN)
 ```
@@ -200,6 +198,5 @@ Robotic navigation dataset: SACSoN(HuRoN)
   year={2023},
   publisher={IEEE}
 }
-
 ```
 
