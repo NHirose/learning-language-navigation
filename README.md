@@ -7,31 +7,51 @@
 
 THIS SOFTWARE AND/OR DATA WAS DEPOSITED IN THE BAIR OPEN RESEARCH COMMONS REPOSITORY ON [DATE].
 
-[Project Page](https://general-navigation-models.github.io) | [Dataset](https://drive.google.com/file/d/1ZwSKwhamq8XmF4mcFNisp9H7YX5kQZ6e/view?usp=sharing) | [Pre-Trained Models](https://drive.google.com/drive/folders/19yJcSJvGmpGlo0X-0owQKrrkPFmPKVt8?usp=sharing)
+[Project Page](https://learning-language-navigation.github.io) | [Dataset](https://drive.google.com/file/d/1ZwSKwhamq8XmF4mcFNisp9H7YX5kQZ6e/view?usp=sharing) | [Pre-Trained Models](https://drive.google.com/drive/folders/19yJcSJvGmpGlo0X-0owQKrrkPFmPKVt8?usp=sharing)
 
 ## Overview
-This repository contains code for training our language-conditioned navigation policy with our data, pre-trained model checkpoints, as well as example code to deploy it on a real robot. We made our code by editing the origional code base for training the general navigation models, GNM, ViNT, and NoMaD [repository](https://github.com/robodhruv/visualnav-transformer). We try to add our LeLaN code with keeping the original code as much as possible. We appricate the GNM, ViNT, and NoMaD teams (We got an approval from them.).
+This repository contains code for training our language-conditioned navigation policy with our data, pre-trained model checkpoints, as well as example code to deploy it on a real robot. We made our code by editing the origional code base for training the general navigation models, GNM, ViNT, and NoMaD in this [repository](https://github.com/robodhruv/visualnav-transformer). We try to add our LeLaN code with keeping the original code as much as possible. We appricate the GNM, ViNT, and NoMaD teams (We got their approval to edit and add our codes on their base).
+
+### Preliminary
+Please down load our code and install some tools for making a conda environment to run our code. We recommend to run our code in the conda environment.
+
+1. Download the repository on your PC:
+    ```
+    git clone https://github.com/NHirose/learning-language-navigation.git
+    
+2. Set up the conda environment:
+    ```
+    conda env create -f train/train_lelan.yml
+    ```
+3. Source the conda environment:
+    ```
+    conda activate lelan
+    ```
+4. Install the lelan packages:
+    ```
+    pip install -e train/
+    ```
+5. Install the `diffusion_policy` package from this [repo](https://github.com/real-stanford/diffusion_policy):
+    ```
+    git clone git@github.com:real-stanford/diffusion_policy.git
+    pip install -e diffusion_policy/
+        
 
 ### Data
-We train our model with the following datasets. We annotate the publicly available robot navigation dataset as well as the in-the-wild videos such as YouTube. In addition, we collect the videos by holding the shperical camera and walking around and annotate them by our method. We publish all annotated labels and corresponding images [here](https://drive.google.com/file/d/1ZwSKwhamq8XmF4mcFNisp9H7YX5kQZ6e/view?usp=sharing). Note that we provide the python code to download and save the images from the YouTube instead of providing the images, due to the copyright.
-[TODO] I need to remove a few trajectories, which is not good for releasing, in Human-walking dataset.
+We train our model with the following datasets. We annotate the publicly available robot navigation dataset as well as the in-the-wild videos such as YouTube. In addition, we collect the videos by holding the shperical camera and walking around outside and annotate them by our method. We publish all annotated labels and corresponding images [here](https://drive.google.com/file/d/1ZwSKwhamq8XmF4mcFNisp9H7YX5kQZ6e/view?usp=sharing). Note that we provide the python code to download and save the images from the YouTube videos instead of providing the images, due to avoiding the copyright issue.
 
 - Robot navigation dataset (GO Stanford2, GO Stanford4, and SACSoN)
 - Human-walking dataset
 - YouTube tour dataset
 
-Followings are the steps to use our dataset on our training code.
-1. Download the repository on your PC:
-    ```
-    git clone https://github.com/NHirose/learning-language-navigation.git
-    ```
-2. Download the dataset from [here](https://drive.google.com/file/d/1ZwSKwhamq8XmF4mcFNisp9H7YX5kQZ6e/view?usp=sharing) and unzip the file in the downloaded repository:
+Followings are the process to use our dataset on our training code.
+1. Download the dataset from [here](https://drive.google.com/file/d/1ZwSKwhamq8XmF4mcFNisp9H7YX5kQZ6e/view?usp=sharing) and unzip the file in the downloaded repository:
 
-3. Change the directory:
+2. Change the directory:
     ```
     cd learning-language-navigation/download_youtube
     ```
-4. Download the YouTube videos and save the corresponding images:
+3. Download the YouTube videos and save the corresponding images:
     ```
     python save_youtube_image.py
     ```
