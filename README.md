@@ -58,31 +58,7 @@ Followings are the process to use our dataset on our training code.
     
 ## Train
 
-This subfolder contains code for processing datasets and training models from your own data.
-
-### Pre-requisites
-
-The codebase assumes access to a workstation running Ubuntu (tested on 18.04 and 20.04), Python 3.7+, and a GPU with CUDA 10+. It also assumes access to conda, but you can modify it to work with other virtual environment packages, or a native setup.
-### Setup
-Run the commands below inside the `vint_release/` (topmost) directory:
-1. Set up the conda environment:
-    ```
-    conda env create -f train/train_lelan.yml
-    ```
-2. Source the conda environment:
-    ```
-    conda activate lelan
-    ```
-3. Install the lelan packages:
-    ```
-    pip install -e train/
-    ```
-4. Install the `diffusion_policy` package from this [repo](https://github.com/real-stanford/diffusion_policy):
-    ```
-    git clone git@github.com:real-stanford/diffusion_policy.git
-    pip install -e diffusion_policy/
-    ```
-
+The subfolder `learning-language-navigation/train/` contains code for training models from your own data. The codebase assumes access to a workstation running Ubuntu (tested on 18.04 and 20.04), Python 3.7+, and a GPU with CUDA 10+. It also assumes access to conda, but you can modify it to work with other virtual environment packages, or a native setup.
 ### Training LeLaN
 #### without collision avoidance
 Run this inside the `learning-language-navigation/train` directory:
