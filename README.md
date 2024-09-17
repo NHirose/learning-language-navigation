@@ -2,7 +2,7 @@
 
 **Contributors**: Noriaki Hirose<sup>1, 2</sup>, Catherine Glossop<sup>1</sup>\*, Ajay Sridhar<sup>1</sup>\*, Oier Mees<sup>1</sup>, Sergey Levine<sup>1</sup>
 
-<sup>1</sup> University of California Berkeley (_Berkeley AI Research_),  <sup>2</sup> Toyota Motor North America, \* indicates equal contributiion
+<sup>1</sup> UC Berkeley (_Berkeley AI Research_),  <sup>2</sup> Toyota Motor North America, \* indicates equal contributiion
 
 
 THIS SOFTWARE AND/OR DATA WAS DEPOSITED IN THE BAIR OPEN RESEARCH COMMONS REPOSITORY ON [DATE].
