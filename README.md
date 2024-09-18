@@ -1,19 +1,24 @@
 # LeLaN: Learning A Language-conditioned Navigation Policy from In-the-Wild Video
+[![arXiv](https://img.shields.io/badge/arXiv-2407.08693-df2a2a.svg)](https://arxiv.org/pdf/2407.08693)
+[![Python](https://img.shields.io/badge/python-3.10-blue)](https://www.python.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![Static Badge](https://img.shields.io/badge/Project-Page-a)](https://learning-language-navigation.github.io)
 
-**Contributors**: Noriaki Hirose<sup>1, 2</sup>, Catherine Glossop<sup>1</sup>\*, Ajay Sridhar<sup>1</sup>\*, Oier Mees<sup>1</sup>, Sergey Levine<sup>1</sup>
+
+[Noriaki Hirose](https://sites.google.com/view/noriaki-hirose/)<sup>1, 2</sup>, [Catherine Glossop](https://www.linkedin.com/in/catherineglossop/)<sup>1</sup>\*, [Ajay Sridhar](https://ajaysridhar.com/)<sup>1</sup>\*, [Oier Mees](https://www.oiermees.com/)<sup>1</sup>, [Sergey Levine](https://people.eecs.berkeley.edu/~svlevine/)<sup>1</sup>
 
 <sup>1</sup> UC Berkeley (_Berkeley AI Research_),  <sup>2</sup> Toyota Motor North America, \* indicates equal contributiion
 
-Conference on Robot Learning 2024
+We present LeLaN, a novel method leverages foundation models to label in-the-wild video data with
+language instructions for object navigation. We train an object navigation policy on this data, result-
+ing in state-of-the-art performance on challenging zero-shot language-conditioned object navigation
+task across a wide variety of indoor and outdoor environments.
 
-THIS SOFTWARE AND/OR DATA WAS DEPOSITED IN THE BAIR OPEN RESEARCH COMMONS REPOSITORY ON [DATE].
 
-[Project Page](https://learning-language-navigation.github.io) | [Dataset](https://drive.google.com/file/d/1IazHcIyPGO7ENswz8_sGCIGBXF8_sZJK/view?usp=sharing) | [Pre-Trained Models](https://drive.google.com/drive/folders/19yJcSJvGmpGlo0X-0owQKrrkPFmPKVt8?usp=sharing)
+![](media/teaser.png)
 
-## Overview
-This repository contains code for training our language-conditioned navigation policy with our data, pre-trained model checkpoints, as well as example code to deploy it on a real robot. We made our code by editing the origional code base for training the general navigation models, GNM, ViNT, and NoMaD in this [repository](https://github.com/robodhruv/visualnav-transformer). We try to add our LeLaN code with keeping the original code as much as possible. We appricate the GNM, ViNT, and NoMaD teams (We got their approval to edit and add our codes on their base).
 
-### Preliminary
+### Installation
 Please down load our code and install some tools for making a conda environment to run our code. We recommend to run our code in the conda environment, although we do not mention the conda environments later.
 
 1. Download the repository on your PC:
