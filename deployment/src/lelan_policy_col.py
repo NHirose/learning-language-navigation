@@ -132,7 +132,6 @@ def callback_lelan(msg_1):
             # text encoder only once at begging
             if flag_once == 0:
                 obj_inst = args.prompt    #"office chair"
-                                                                                                                                                                                                                                         
                 batch_obj_inst = clip.tokenize(obj_inst).to(device)            
                 feat_text = model("text_encoder", inst_ref=batch_obj_inst)
             else:
