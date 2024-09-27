@@ -3,10 +3,10 @@ run_name: lelan
 
 # training setup
 use_wandb: True # set to false if you don't want to log to wandb
-train: True
+train: False
 batch_size: 256
 eval_batch_size: 400
-epochs: 6
+epochs: 30
 gpu_ids: [0]
 num_workers: 1 #12
 lr: 1e-4
@@ -43,7 +43,7 @@ num_diffusion_iters: 10
 # normalization for the action space
 normalize: True
 
-weight_col_loss: 10.0
+weight_col_loss: 5.0
 
 # context
 context_type: temporal
@@ -76,42 +76,6 @@ datasets:
     aug_seq: False
     only_front: False
             
-  sacson:
-    train: ../dataset/lelan_sacson/train/
-    test: ../dataset/lelan_sacson/test/
-    image: ../dataset/dataset_LeLaN_sacson/
-    pickle: ../dataset/dataset_LeLaN_sacson/
-    backside: False
-    aug_seq: False
-    only_front: False
-            
-  go_stanford2:
-    train: ../dataset/lelan_gs2/train/
-    test: ../dataset/lelan_gs2/test/
-    image: ../dataset/dataset_LeLaN_gs2/
-    pickle: ../dataset/dataset_LeLaN_gs2/
-    backside: False
-    aug_seq: False
-    only_front: False
-
-  humanw:
-    train: ../dataset/lelan_humanw/train/
-    test: ../dataset/lelan_humanw/test/
-    image: ../dataset/dataset_LeLaN_humanwalk/
-    pickle: ../dataset/dataset_LeLaN_humanwalk/    
-    backside: False
-    aug_seq: False 
-    only_front: True   
-
-  youtube:
-    train: ../dataset/lelan_youtube/train/
-    test: ../dataset/lelan_youtube/test/
-    image: ../dataset/dataset_LeLaN_youtube/
-    pickle: ../dataset/dataset_LeLaN_youtube/        
-    backside: False
-    aug_seq: False 
-    only_front: True  
-        
 # logging stuff
 ## =0 turns off
 print_log_freq: 1000 # in iterations
@@ -123,6 +87,6 @@ wandb_log_freq: 10 # in iterations
 eval_freq: 1 # in epochs 20
 save_freq: 1 # in epochs
 
-load_run: lelan-release/lelan_2024_09_12_17_32_13
-#load_run: lelan-release/lelan_2024_09_16_09_38_33
+#load_run: lelan-release/lelan_2024_09_12_17_32_13
+load_run: lelan-release/lelan_2024_09_16_09_38_33
 load_nomad: nomad/nomad_crop

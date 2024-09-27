@@ -43,7 +43,7 @@ num_diffusion_iters: 10
 # normalization for the action space
 normalize: True
 
-weight_col_loss: 10.0
+weight_col_loss: 50.0
 
 # context
 context_type: temporal

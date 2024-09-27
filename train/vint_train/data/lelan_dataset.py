@@ -422,7 +422,7 @@ class LeLaN_Dataset(Dataset):
             
         voffset = int(224.0*self.v_random*random.random())
         hoffset = int(224.0*self.h_random*random.random())
-        
+
         image_obs_list = [] 
         if self.only_front:
             for ih in range(self.context_size + 1):

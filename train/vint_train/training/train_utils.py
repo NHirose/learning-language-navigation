@@ -523,80 +523,6 @@ def _compute_losses_nomad(
     }
 
     return results
-
-def _compute_losses_lnp(
-    ema_model,
-    batch_obs_images,
-    batch_goal_images,
-    batch_dist_label: torch.Tensor,
-    device: torch.device,
-):
-    """
-    Compute losses for distance and action prediction.
-    """
-
-    pred_horizon = batch_dist_label.shape[1]
-    action_dim = batch_dist_label.shape[2]
-
-    model_output_dict = model_output(
-        ema_model,
-        noise_scheduler,
-        batch_obs_images,
-        batch_goal_images,
-        pred_horizon,
-        action_dim,
-        num_samples=1,
-        device=device,
-    )
-    uc_actions = model_output_dict['uc_actions']
-    gc_actions = model_output_dict['gc_actions']
-    gc_distance = model_output_dict['gc_distance']
-
-    gc_dist_loss = F.mse_loss(gc_distance, batch_dist_label.unsqueeze(-1))
-
-    def action_reduce(unreduced_loss: torch.Tensor):
-        # Reduce over non-batch dimensions to get loss per batch element
-        while unreduced_loss.dim() > 1:
-            unreduced_loss = unreduced_loss.mean(dim=-1)
-        assert unreduced_loss.shape == action_mask.shape, f"{unreduced_loss.shape} != {action_mask.shape}"
-        return (unreduced_loss * action_mask).mean() / (action_mask.mean() + 1e-2)
-
-    # Mask out invalid inputs (for negatives, or when the distance between obs and goal is large)
-    assert uc_actions.shape == batch_dist_label.shape, f"{uc_actions.shape} != {batch_dist_label.shape}"
-    assert gc_actions.shape == batch_dist_label.shape, f"{gc_actions.shape} != {batch_dist_label.shape}"
-
-    uc_action_loss = action_reduce(F.mse_loss(uc_actions, batch_dist_label, reduction="none"))
-    gc_action_loss = action_reduce(F.mse_loss(gc_actions, batch_dist_label, reduction="none"))
-
-    uc_action_waypts_cos_similairity = action_reduce(F.cosine_similarity(
-        uc_actions[:, :, :2], batch_dist_label[:, :, :2], dim=-1
-    ))
-    uc_multi_action_waypts_cos_sim = action_reduce(F.cosine_similarity(
-        torch.flatten(uc_actions[:, :, :2], start_dim=1),
-        torch.flatten(batch_dist_label[:, :, :2], start_dim=1),
-        dim=-1,
-    ))
-
-    gc_action_waypts_cos_similairity = action_reduce(F.cosine_similarity(
-        gc_actions[:, :, :2], batch_dist_label[:, :, :2], dim=-1
-    ))
-    gc_multi_action_waypts_cos_sim = action_reduce(F.cosine_similarity(
-        torch.flatten(gc_actions[:, :, :2], start_dim=1),
-        torch.flatten(batch_dist_label[:, :, :2], start_dim=1),
-        dim=-1,
-    ))
-
-    results = {
-        "uc_action_loss": uc_action_loss,
-        "uc_action_waypts_cos_sim": uc_action_waypts_cos_similairity,
-        "uc_multi_action_waypts_cos_sim": uc_multi_action_waypts_cos_sim,
-        "gc_dist_loss": gc_dist_loss,
-        "gc_action_loss": gc_action_loss,
-        "gc_action_waypts_cos_sim": gc_action_waypts_cos_similairity,
-        "gc_multi_action_waypts_cos_sim": gc_multi_action_waypts_cos_sim,
-    }
-
-    return results
     
 def sinc_apx(angle):
     return torch.sin(3.141592*angle + 0.000000001)/(3.141592*angle + 0.000000001)
@@ -968,7 +894,7 @@ def train_lelan_col(
                     wandb.log(data_log, commit=True)
 
             if image_log_freq != 0 and i % image_log_freq == 0:
-                visualize_lelan_estimation(
+                visualize_lelan_col_estimation(
                     batch_viz_obs_images,
                     batch_viz_goal_images,
                     goal_pos,
@@ -976,6 +902,7 @@ def train_lelan_col(
                     linear_vel.cpu(),
                     angular_vel.cpu(),
                     last_poses.cpu(),
+                    (0.12*select_traj).cpu(),
                     "train",
                     project_folder,
                     epoch,
@@ -1729,7 +1656,7 @@ def evaluate_lelan_col(
                     wandb.log(data_log, commit=True)
             
             if image_log_freq != 0 and i % image_log_freq == 0:
-                visualize_lelan_estimation(
+                visualize_lelan_col_estimation(
                     batch_viz_obs_images,
                     batch_viz_goal_images,
                     goal_pos,
@@ -1737,6 +1664,7 @@ def evaluate_lelan_col(
                     linear_vel.cpu(),
                     angular_vel.cpu(),
                     last_poses.cpu(),
+                    (0.12*select_traj).cpu(),                    
                     eval_type,
                     project_folder,
                     epoch,
@@ -2575,3 +2503,101 @@ def visualize_lelan_estimation(
             
     if len(wandb_list) > 0 and use_wandb:
         wandb.log({f"{eval_type}_action_samples": wandb_list}, commit=False)       
+        
+def visualize_lelan_col_estimation(
+    batch_viz_obs_images: torch.Tensor,
+    batch_viz_goal_images: torch.Tensor,
+    obj_poses: torch.Tensor,
+    obj_inst: torch.Tensor,
+    linear_vel: torch.Tensor,
+    angular_vel: torch.Tensor,
+    last_poses: torch.Tensor,
+    ref_actions: torch.Tensor,
+    eval_type: str,    
+    project_folder: str,
+    epoch: int,
+    num_images_log: int,
+    num_samples: int = 30,    
+    use_wandb: bool = True,
+):
+    """Plot samples from the exploration model."""
+
+    visualize_path = os.path.join(
+        project_folder,
+        "visualize",
+        eval_type,
+        f"epoch{epoch}",
+        "action_sampling_prediction",
+    )
+    if not os.path.isdir(visualize_path):
+        os.makedirs(visualize_path)
+
+    num_images_log = min(num_images_log, batch_viz_obs_images.shape[0], batch_viz_goal_images.shape[0], obj_poses.shape[0], last_poses.shape[0])    
+    batch_linear_vel = linear_vel[:num_images_log]
+    batch_angular_vel = angular_vel[:num_images_log]
+    
+    px_list, pz_list, ry_list = robot_pos_model_fix(batch_linear_vel, batch_angular_vel)
+    
+    px_list_a = []
+    pz_list_a = []
+    for px_v in px_list:
+        px_list_a.append(px_v.unsqueeze(1))
+    for pz_v in pz_list:
+        pz_list_a.append(pz_v.unsqueeze(1))        
+    batch_px_list = torch.cat(px_list_a, axis=1)
+    batch_pz_list = torch.cat(pz_list_a, axis=1)
+    
+    wandb_list = []
+        
+    for i in range(num_images_log):
+        fig = plt.figure(figsize=(34, 16), dpi=80)
+        gs = fig.add_gridspec(2,3)
+        ax_graph = fig.add_subplot(gs[0:2, 0:1])
+        ax_ob = fig.add_subplot(gs[0:1, 1:2])
+        ax_goal = fig.add_subplot(gs[0:1, 2:3])
+        ax_inst = fig.add_subplot(gs[1:2, 1:3])
+                    
+        x_seq = to_numpy(batch_px_list[i])
+        z_seq = to_numpy(batch_pz_list[i])
+                
+        xgt = to_numpy(obj_poses[i,0])
+        ygt = to_numpy(obj_poses[i,1])
+
+        xest = to_numpy(last_poses[i,0])
+        yest = to_numpy(last_poses[i,1])
+        
+        x_nomad = to_numpy(ref_actions[i,:,0])
+        y_nomad = to_numpy(ref_actions[i,:,1])
+        
+        ax_graph.plot(x_seq, z_seq, marker = 'o', color='blue')
+        ax_graph.plot(-y_nomad, x_nomad, marker = 'o', color='magenta')
+        ax_graph.plot(xgt, ygt, marker = '*', color='red')
+        ax_graph.plot(xest, yest, marker = '+', color='green')
+                
+        obs_image = to_numpy(batch_viz_obs_images[i])
+        prompt = obj_inst[i]
+        goal_image = to_numpy(batch_viz_goal_images[i])
+        # move channel to last dimension
+        obs_image = np.moveaxis(obs_image, 0, -1)
+        goal_image = np.moveaxis(goal_image, 0, -1)
+        ax_ob.imshow(obs_image)
+        ax_goal.imshow(goal_image)
+        ax_inst.text(0, 0, prompt, fontsize = 12, color = 'black')
+        ax_inst.axis('off')
+                        
+        # set title
+        ax_graph.set_title(f"est. trajectory")
+        ax_ob.set_title(f"observation")
+        ax_goal.set_title(f"cropped goal image")
+        
+        # make the plot large
+        fig.set_size_inches(18.5, 10.5)
+        
+        save_path = os.path.join(visualize_path, f"sample_{i}.png")
+        plt.savefig(save_path)
+        wandb_list.append(wandb.Image(save_path))
+        plt.close(fig)
+            
+    if len(wandb_list) > 0 and use_wandb:
+        wandb.log({f"{eval_type}_action_samples": wandb_list}, commit=False)           
+        
