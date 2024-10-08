@@ -1,4 +1,4 @@
-name: nomad_train
+name: lelan
 channels:
 - pytorch
 - conda-forge

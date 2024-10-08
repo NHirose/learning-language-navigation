@@ -9,7 +9,7 @@
 
 <sup>1</sup> UC Berkeley (_Berkeley AI Research_),  <sup>2</sup> Toyota Motor North America, \* indicates equal contributiion
 
-We present LeLaN, a novel method leverages foundation models to label in-the-wild video data with
+We present LeLaN, a novel method that leverages foundation models to label in-the-wild video data with
 language instructions for object navigation. We train an object navigation policy on this data, result-
 ing in state-of-the-art performance on challenging zero-shot language-conditioned object navigation
 task across a wide variety of indoor and outdoor environments.
@@ -19,9 +19,9 @@ task across a wide variety of indoor and outdoor environments.
 
 
 ### Installation
-Please down load our code and install some tools for making a conda environment to run our code. We recommend to run our code in the conda environment, although we do not mention the conda environments later.
+Please down load our code and install some tools for making a conda environment to run our code. We recommend to run our code in the conda environment.
 
-1. Download the repository on your PC:
+1. Clone our repository:
     ```
     git clone https://github.com/NHirose/learning-language-navigation.git
     ```
@@ -44,11 +44,30 @@ Please down load our code and install some tools for making a conda environment 
     ``` 
 
 ### Data
-We train our model with the following datasets. We annotate the publicly available robot navigation dataset as well as the in-the-wild videos such as YouTube. In addition, we collected the videos by holding the shperical camera and walking around outside and annotated them by our method. We publish all annotated labels and corresponding images [here](https://drive.google.com/file/d/1IazHcIyPGO7ENswz8_sGCIGBXF8_sZJK/view?usp=sharing). Note that we provide the python code to download and save the images from the YouTube videos instead of providing the images, due to avoiding the copyright issue.
+We train our model with the following datasets. We annotate the publicly available robot navigation dataset as well as the in-the-wild videos from YouTube. In addition, we collect videos by walking around outside with a spherical camera and annotate them using our method videos. We publish all annotated labels and corresponding images [here](https://drive.google.com/file/d/1IazHcIyPGO7ENswz8_sGCIGBXF8_sZJK/view?usp=sharing). Note that we provide the python code to download and save the images from the YouTube videos instead of providing the images, due to avoiding the copyright issue.
 
 - Robot navigation dataset (GO Stanford2, GO Stanford4, and SACSoN)
 - Human-walking dataset
 - YouTube tour dataset
+
+All the datasets follow the following format: 
+```
+dataset_name 
+|___trajectory_folder_0
+|     |___image
+|     |      | 00000000.jpg
+|     |      | 00000001.jpg
+|     |      | ...
+|     |
+|     |___pickle 
+|            | 00000000.pkl
+|            | 00000001.pkl
+|            | ...    
+|
+|___trajectory_folder_1
+      ...
+```
+Each of the pickle files contain a list of objects with the fields `bbox`, or the bounding box of the object in the corresponding frame, `pose_mean`, the mean pose of the object given the estimated depth, `pose_median`, the median pose of the object given the estimated depth, `obj_inst`, a description of the object, and `obj_detect`, whether or not the object was detected by the Segment Anything model. 
 
 Followings are the process to use our dataset on our training code.
 1. Download the dataset from [here](https://drive.google.com/file/d/1IazHcIyPGO7ENswz8_sGCIGBXF8_sZJK/view?usp=sharing) and unzip the file in the downloaded repository:
@@ -96,7 +115,7 @@ The subfolder `learning-language-navigation/deployment/` contains code to load a
 
 ### Hardware Setup
 We need following three hardwares to navigate the robot toward the target object location with the LeLaN.
-1. Robot: Please setup the ROS on your robot to enable us to control the robot by "/cmd_vel" of geometry_msgs/Twist message. We tested on the Vizbot(Roomba base robot) and the quadruped robot Go1.
+1. Robot: Please setup ROS on your robot to enable us to control the robot with the "/cmd_vel" topic which is published to with a geometry_msgs/Twist message. We tested on the Vizbot(Roomba base robot) and the quadruped robot Go1.
 
 2. Camera: Please mount the camera on your robot, which we can use on ROS to publish `sensor_msgs/Image`. We tested the [ELP fisheye camera](https://www.amazon.com/ELP-170degree-Fisheye-640x480-Resolution/dp/B00VTHD17W), the [Ricoh Theta S](https://us.ricoh-imaging.com/product/theta-s/), and the [Intel D435i](https://www.intelrealsense.com/depth-camera-d435i/).
 
@@ -114,7 +133,7 @@ If the target object location is close to the robot and visible from the robot, 
 
 1. `roscore`
 2. Launch camera node: Please start the camera node to publish the topic, `sensor_msgs/Image`. For example, we use the [usb_cam](http://wiki.ros.org/usb_cam) for the [ELP fisheye camera](https://www.amazon.com/ELP-170degree-Fisheye-640x480-Resolution/dp/B00VTHD17W), the [cv_camera](http://wiki.ros.org/cv_camera) for the [spherical camera](https://us.ricoh-imaging.com/product/theta-s/) and the [realsense2_camera](http://wiki.ros.org/realsense2_camera) for the [Intel D435i](https://www.intelrealsense.com/depth-camera-d435i/). We recommned to use a wide-angle RGB camera to robustly capture the target objects.
-3. Launch LeLaN policy: This command immediately run the robot toward the target objects, which correspond to the `<prompt for target object>` such as "office chair". The example of `<path for the config file>` is `'../../train/config/lelan.yaml'`, which you can specify the same yaml file in your training. `<path for the moel checkpoint>` is the path for your trained model. The default is `'../model_weights/wo_col_loss_wo_temp.pth'`. `<bool for camera type>` is the boolean to specify whether the camera is the Ricoh Theta S or not.
+3. Launch LeLaN policy: This command immediately runs the policy to navigate the robot toward the target object(s), which correspond to the `<prompt for target object>` such as "office chair". The example of `<path for the config file>` is `'../../train/config/lelan.yaml'`, which you can specify the same yaml file in your training. `<path for the moel checkpoint>` is the path for your trained model. The default is `'../model_weights/wo_col_loss_wo_temp.pth'`. `<bool for camera type>` is the boolean to specify whether the camera is the Ricoh Theta S or not.
 ```
 python lelan_policy_col.py -p <prompt for target object> -c <path for the config file> -m <path for the moel checkpoint> -r <boolean for camera type>
 ```
@@ -124,8 +143,8 @@ Note that you manually change the topic name, 'TOPIC_NAME_CAMERA' in `lelan_poli
 
 #### Long-distance Navigation
 
-Since it is difficult for the LeLaN to navigate toward the far target object, we provide the system leveraging the topological map.
-There are three steps in our approach, 0) search all node images and specify the target node capturing the tareget object, 1) move toward the target node, which is close to the target object, and 2) switch the policy to the LeLaN and go to the target object location. To search the target node in the topological memory in 0), we use Owl-ViT2 for scoring all nodes and select the node with the highest score. And, we use the ViNT policy for 1). Before navigation, we collect the topological map in your environment by teleperation. Then we can run our robot toward the far target object.
+Since it is difficult for LeLaN to navigate toward target objects that are far away, we leverage a system that integrates topological maps.
+There are three steps in our approach, 0) search all node images and specify the target node capturing the target object, 1) move toward the target node, which is close to the target object, and 2) switch the policy to the LeLaN and go to the target object location. To search the target node in the topological memory in 0), we use Owl-ViT2 for scoring all nodes and select the node with the highest score. And, we use the ViNT policy for 1). Before navigation, we collect the topological map in a given environment by teleperation. Then we can run our robot policy with far objects.
 
 ##### Collecting a Topological Map
 

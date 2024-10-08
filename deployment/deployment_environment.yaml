@@ -1,4 +1,4 @@
-name: vint_deployment
+name: lelan_deployment
 channels:
 - pytorch
 - conda-forge
