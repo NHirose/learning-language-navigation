@@ -1,5 +1,5 @@
 # LeLaN: Learning A Language-conditioned Navigation Policy from In-the-Wild Video
-[![arXiv](https://img.shields.io/badge/arXiv-2407.08693-df2a2a.svg)](https://arxiv.org/pdf/2407.08693)
+[![arXiv](https://img.shields.io/badge/arXiv-2410.03603-b31b1b.svg)](https://arxiv.org/pdf/2410.03603)
 [![Python](https://img.shields.io/badge/python-3.10-blue)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Static Badge](https://img.shields.io/badge/Project-Page-a)](https://learning-language-navigation.github.io)
